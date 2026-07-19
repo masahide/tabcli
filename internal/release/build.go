@@ -213,7 +213,7 @@ func buildWindows(config BuildConfig, root, out, extensionRoot string) error {
 	if err := DeterministicZip(filepath.Join(out, "tabcli-extension.zip"), unpacked, files, config.Timestamp); err != nil {
 		return err
 	}
-	instructions := "tabcli for Windows 11 x64\n\n1. Completely exit Google Chrome before updating.\n2. Extract this ZIP and run install.ps1 in PowerShell.\n3. Open chrome://extensions and enable Developer mode.\n4. Load the unpacked extension directory printed by the installer.\n5. Confirm extension ID " + buildinfo.ExtensionID + ".\n6. Run tabcli.exe --json doctor, then tabcli.exe --json list.\n\nThe binary is not Authenticode-signed and Windows SmartScreen may warn. The installer never terminates Chrome and does not modify PATH.\n"
+	instructions := "tabcli for Windows 11 x64\n\n1. Completely exit Google Chrome before updating.\n2. Extract this ZIP and run install.ps1 in PowerShell.\n3. Open chrome://extensions and enable Developer mode.\n4. Load the unpacked extension directory printed by the installer.\n5. Confirm extension ID " + buildinfo.ExtensionID + ".\n6. Run tabcli --json doctor, then tabcli --json list.\n\nThe binary is not Authenticode-signed and Windows SmartScreen may warn. The installer never terminates Chrome and adds its program directory to the current user's PATH.\n"
 	if err := os.WriteFile(filepath.Join(out, "INSTALL.txt"), []byte(instructions), 0o600); err != nil {
 		return err
 	}

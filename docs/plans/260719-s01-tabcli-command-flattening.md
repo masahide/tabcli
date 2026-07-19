@@ -179,7 +179,7 @@ Chromeが旧 `tabcli.exe` を使用中で配置先を置換できない場合、
 - インストール先の `tabcli.exe` がChromeから実行中の場合、更新前にChromeの完全終了が必要になる。
 - installerはChromeを強制終了せず、ユーザーへ終了と再実行を求める。
 - 拡張機能のunpacked loadはChrome UIから手動で行う。
-- installerはユーザーPATHを自動変更しない。完了時に実行ファイルの絶対pathを表示する。
+- installerは実行ファイルの配置先をユーザーPATHへ重複なく追加し、完了時に実行ファイルの絶対pathも表示する。
 - macOSの実機検証と配布更新はWindows MVP完了後に行う。
 - MCPツール名は既存APIとして `chrome_*` を維持する。
 

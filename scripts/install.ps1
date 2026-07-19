@@ -6,6 +6,47 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2
 
+function Add-DirectoryToUserPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory
+    )
+
+    $normalizedDirectory = $Directory.Trim().TrimEnd([char[]]@('\', '/'))
+    $userPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User)
+    $userEntries = @()
+    if (-not [string]::IsNullOrWhiteSpace($userPath)) {
+        $userEntries = @($userPath.Split(';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    $userPathContainsDirectory = @($userEntries | Where-Object {
+        [string]::Equals(
+            $_.Trim().TrimEnd([char[]]@('\', '/')),
+            $normalizedDirectory,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    }).Count -gt 0
+    if (-not $userPathContainsDirectory) {
+        [Environment]::SetEnvironmentVariable(
+            "Path",
+            (($userEntries + $normalizedDirectory) -join ';'),
+            [EnvironmentVariableTarget]::User
+        )
+    }
+
+    $processEntries = @($env:Path.Split(';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $processPathContainsDirectory = @($processEntries | Where-Object {
+        [string]::Equals(
+            $_.Trim().TrimEnd([char[]]@('\', '/')),
+            $normalizedDirectory,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    }).Count -gt 0
+    if (-not $processPathContainsDirectory) {
+        $env:Path = (($processEntries + $normalizedDirectory) -join ';')
+    }
+
+    return -not $userPathContainsDirectory
+}
+
 $metadataPath = Join-Path $BundleRoot "version.json"
 $binarySource = Join-Path $BundleRoot "tabcli.exe"
 $extensionArchive = Join-Path $BundleRoot "tabcli-extension.zip"
@@ -61,6 +102,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "tabcli install failed with exit code $LASTEXITCODE"
     }
+
+    $pathAdded = Add-DirectoryToUserPath -Directory $programDirectory
 } finally {
     if (Test-Path -LiteralPath $stagingRoot) {
         Remove-Item -LiteralPath $stagingRoot -Recurse -Force
@@ -68,6 +111,12 @@ try {
 }
 
 Write-Host "Installed tabcli: $binaryDestination"
+if ($pathAdded) {
+    Write-Host "Added tabcli to the current user's PATH: $programDirectory"
+    Write-Host "Open a new terminal before running tabcli from another process."
+} else {
+    Write-Host "tabcli is already on the current user's PATH: $programDirectory"
+}
 Write-Host "Chrome extension directory: $extensionDirectory"
 Write-Host "Open chrome://extensions, enable Developer mode, and choose Load unpacked."
 Write-Host "This unsigned build may show a Windows SmartScreen warning."

@@ -34,15 +34,9 @@ Windows PowerShellから最新のstable Releaseをワンライナーでインス
 irm https://raw.githubusercontent.com/masahide/tabcli/main/install.ps1 | iex
 ```
 
-bootstrapはGitHub APIから最新ReleaseのWindows amd64 bundleと`SHA256SUMS`を取得し、SHA-256検証に成功したbundleだけを展開します。GitHub CLIや管理者権限は不要です。このワンライナーは`main`上のスクリプトを事前確認せず実行するため、確認してから実行する場合は次を使用します。
+bootstrapはGitHub APIから最新ReleaseのWindows amd64 bundleと`SHA256SUMS`を取得し、SHA-256検証に成功したbundleだけを展開します。GitHub CLIや管理者権限は不要です。
 
-```powershell
-irm https://raw.githubusercontent.com/masahide/tabcli/main/install.ps1 -OutFile install-tabcli.ps1
-Get-Content .\install-tabcli.ps1
-.\install-tabcli.ps1
-```
-
-インストールとunpacked extensionの読み込みは[Windowsガイド](docs/getting-started-windows.md)を参照してください。インストーラーはChromeを強制終了せず、PATHも変更しません。
+インストールとunpacked extensionの読み込みは[Windowsガイド](docs/getting-started-windows.md)を参照してください。インストーラーはChromeを強制終了せず、実行ファイルの配置先を現在ユーザーのPATHへ重複なく追加します。
 
 ## CLI
 
@@ -63,17 +57,16 @@ tabcli.exe group undo
 管理コマンドの`install`、`uninstall`、`status`、`doctor`、`version`と、stdio MCP proxyの`mcp serve`も利用できます。旧`tabs list`と`groups list`に互換aliasはなく、未知のコマンドとして拒否します。
 
 ```powershell
-$Tabcli = "$env:LOCALAPPDATA\Programs\tabcli\tabcli.exe"
-& $Tabcli --json version
-& $Tabcli --json doctor
-& $Tabcli --json list --inactive-for 7d --include-activity
-& $Tabcli --json content 123 --max-chars 10000
-& $Tabcli --json compare 123 456
-& $Tabcli --json diff 123 456 --max-chars 50000 --max-diff-chars 20000
-& $Tabcli --json close --confirm 123 456
-& $Tabcli --json group preview --plan .\plan.json
-& $Tabcli --json group apply --preview-id PREVIEW_ID
-& $Tabcli mcp serve
+tabcli --json version
+tabcli --json doctor
+tabcli --json list --inactive-for 7d --include-activity
+tabcli --json content 123 --max-chars 10000
+tabcli --json compare 123 456
+tabcli --json diff 123 456 --max-chars 50000 --max-diff-chars 20000
+tabcli --json close --confirm 123 456
+tabcli --json group preview --plan .\plan.json
+tabcli --json group apply --preview-id PREVIEW_ID
+tabcli mcp serve
 ```
 
 `compare`は可視テキストを拡張内でSHA-256化して一致を判定し、本文を返しません。`diff`は上限付きの変更行だけを返します。どちらもタブを自動的に閉じません。

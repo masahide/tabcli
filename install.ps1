@@ -88,6 +88,18 @@ try {
     )
     & $bundleInstaller -BundleRoot $bundleRoot
     Write-Host "tabcli $version installation completed."
+    $installedBinary = Join-Path $env:LOCALAPPDATA "Programs\tabcli\tabcli.exe"
+    $installedExtension = Join-Path $env:LOCALAPPDATA "tabcli\releases\$version\tabcli-extension-unpacked"
+    Write-Host ""
+    Write-Host "Next steps:"
+    Write-Host "1. Open chrome://extensions in Google Chrome."
+    Write-Host "2. Enable Developer mode, choose Load unpacked, and select:"
+    Write-Host "   $installedExtension"
+    Write-Host "3. Confirm extension ID: ddgfmgclndpdobieomcjaklboinbaoel"
+    Write-Host "4. Reload the extension or restart Chrome, then verify the connection:"
+    Write-Host "   & `"$installedBinary`" --json doctor"
+    Write-Host "   & `"$installedBinary`" --json list"
+    Write-Host "Guide: https://github.com/masahide/tabcli/blob/main/docs/getting-started-windows.md"
 } finally {
     if (Test-Path -LiteralPath $temporary) {
         Remove-Item -LiteralPath $temporary -Recurse -Force -ErrorAction SilentlyContinue

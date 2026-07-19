@@ -30,7 +30,17 @@ func TestWindowsInstallScriptsContainSafetyAndVerificationContracts(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, marker := range []string{"LOCALAPPDATA", "Programs\\tabcli", "Completely exit Google Chrome", "tabcli-extension.zip", "version.json"} {
+	for _, marker := range []string{
+		"LOCALAPPDATA",
+		"Programs\\tabcli",
+		"Completely exit Google Chrome",
+		"tabcli-extension.zip",
+		"version.json",
+		"EnvironmentVariableTarget]::User",
+		"Add-DirectoryToUserPath",
+		"OrdinalIgnoreCase",
+		"Open a new terminal",
+	} {
 		if !strings.Contains(string(installer), marker) {
 			t.Errorf("install.ps1 lacks %q", marker)
 		}
@@ -57,6 +67,9 @@ func TestIRMBootstrapDownloadsLatestVerifiedWindowsRelease(t *testing.T) {
 		"PROCESSOR_ARCHITECTURE",
 		"[ScriptBlock]::Create",
 		"-BundleRoot $bundleRoot",
+		"Next steps:",
+		"chrome://extensions",
+		"getting-started-windows.md",
 	} {
 		if !strings.Contains(string(bootstrap), marker) {
 			t.Errorf("root install.ps1 lacks %q", marker)
