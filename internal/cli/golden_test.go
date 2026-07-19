@@ -52,7 +52,7 @@ func TestTopLevelJSONProducesStableSuccessAndErrorShapes(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		var stdout, stderr bytes.Buffer
 		command := Command{Caller: fakeCaller{err: tools.NewError(tools.CodePlanStale, "changed")}}
-		exit := command.Run(context.Background(), []string{"--json", "groups", "list"}, &stdout, &stderr)
+		exit := command.Run(context.Background(), []string{"--json", "group", "list"}, &stdout, &stderr)
 		if exit != ExitPlanStale || stderr.Len() != 0 {
 			t.Fatalf("exit=%d stderr=%q", exit, stderr.String())
 		}
@@ -60,6 +60,25 @@ func TestTopLevelJSONProducesStableSuccessAndErrorShapes(t *testing.T) {
 			t.Fatalf("JSON error = %q", stdout.String())
 		}
 	})
+}
+
+func TestLegacyNestedCommandsAreRejected(t *testing.T) {
+	for _, legacy := range []string{"tabs", "groups"} {
+		t.Run(legacy+" human", func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			exit := (Command{}).Run(context.Background(), []string{legacy, "list"}, &stdout, &stderr)
+			if exit != ExitUsage || stdout.Len() != 0 || !strings.Contains(stderr.String(), "unknown command") {
+				t.Fatalf("exit=%d stdout=%q stderr=%q", exit, stdout.String(), stderr.String())
+			}
+		})
+		t.Run(legacy+" json", func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			exit := (Command{}).Run(context.Background(), []string{"--json", legacy, "list"}, &stdout, &stderr)
+			if exit != ExitInvalidArgument || stderr.Len() != 0 || !strings.Contains(stdout.String(), `"code":"INVALID_ARGUMENT"`) {
+				t.Fatalf("exit=%d stdout=%q stderr=%q", exit, stdout.String(), stderr.String())
+			}
+		})
+	}
 }
 
 func TestStructuredErrorsHaveUniqueExitCodes(t *testing.T) {

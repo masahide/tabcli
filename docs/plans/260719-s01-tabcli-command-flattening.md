@@ -488,42 +488,42 @@ sequenceDiagram
 
 ### Phase 1 Windows対応の設計とベースライン
 
-- [ ] WIN-001 Windows 11 x64、Chrome Stable、HKCU current user installをMVP契約として確定する
-- [ ] WIN-002 Canonical identityを `github.com/masahide/tabcli`、`io.github.masahide.tabcli`、固定extension IDとして確定する
-- [ ] WIN-003 Red `internal/app/mode_test.go` にWindowsのoriginと `--parent-window` を含む起動testを追加する
-- [ ] WIN-004 Green `DetectMode` のOS依存コメントを修正し、Windows追加引数を安全に許容する
+- [x] WIN-001 Windows 11 x64、Chrome Stable、HKCU current user installをMVP契約として確定する
+- [x] WIN-002 Canonical identityを `github.com/masahide/tabcli`、`io.github.masahide.tabcli`、固定extension IDとして確定する
+- [x] WIN-003 Red `internal/app/mode_test.go` にWindowsのoriginと `--parent-window` を含む起動testを追加する
+- [x] WIN-004 Green `DetectMode` のOS依存コメントを修正し、Windows追加引数を安全に許容する
 - [ ] WIN-005 Red Windows pathの失敗testを追加する。対象は `internal/install` と `internal/discovery`
-- [ ] WIN-006 Green OS別pathを `*_windows.go` と `*_darwin.go` に分割し、shared logicからruntime分岐を除去する
-- [ ] WIN-007 Refactor product identityとpath componentの重複を `internal/buildinfo` へ集約する
+- [x] WIN-006 Green OS別pathを `*_windows.go` と `*_darwin.go` に分割し、shared logicからruntime分岐を除去する
+- [x] WIN-007 Refactor product identityとpath componentの重複を `internal/buildinfo` へ集約する
 
 ### Phase 2 Windows Native Messaging登録
 
-- [ ] REG-001 Red registry操作をfake化できるinterfaceとregister、verify、rollback、unregisterのtestを追加する
-- [ ] REG-002 Green `golang.org/x/sys/windows/registry` を使いHKCUのNativeMessagingHostsへ既定値を書き込む
-- [ ] REG-003 Green `%LOCALAPPDATA%\tabcli\native-messaging` へmanifestをtemporary fileから原子的に配置する
-- [ ] REG-004 Green registry既定値がmanifestの絶対pathと一致することをread backして検証する
+- [x] REG-001 Red registry操作をfake化できるinterfaceとregister、verify、rollback、unregisterのtestを追加する
+- [x] REG-002 Green `golang.org/x/sys/windows/registry` を使いHKCUのNativeMessagingHostsへ既定値を書き込む
+- [x] REG-003 Green `%LOCALAPPDATA%\tabcli\native-messaging` へmanifestをtemporary fileから原子的に配置する
+- [x] REG-004 Green registry既定値がmanifestの絶対pathと一致することをread backして検証する
 - [ ] REG-005 Red `doctor` がexe、manifest、registry、discovery、Chrome、MCPを個別checkとして返すtestを追加する
-- [ ] REG-006 Green Windows registration checkを `doctor` へ追加する
-- [ ] REG-007 Red uninstallがcanonical registry keyとmanaged fileだけを削除するtestを追加する
-- [ ] REG-008 Green Windows uninstallを実装し、他製品、他host、developer fileを保持する
-- [ ] REG-009 Contract Go、Chrome拡張、manifest、registry keyのhost名一致testを追加する
+- [x] REG-006 Green Windows registration checkを `doctor` へ追加する
+- [x] REG-007 Red uninstallがcanonical registry keyとmanaged fileだけを削除するtestを追加する
+- [x] REG-008 Green Windows uninstallを実装し、他製品、他host、developer fileを保持する
+- [x] REG-009 Contract Go、Chrome拡張、manifest、registry keyのhost名一致testを追加する
 
 ### Phase 3 Windows ReleaseとPowerShell installer
 
-- [ ] REL-001 Red release target `windows-amd64` のartifact構成testを追加する
-- [ ] REL-002 Green `cmd/release` に明示的な `--target windows-amd64` を追加する
-- [ ] REL-003 Green `CGO_ENABLED=0 GOOS=windows GOARCH=amd64` で `tabcli.exe` を生成する
-- [ ] REL-004 Green Windows bundle ZIP、extension ZIP、version metadata、SHA256SUMSを生成する
-- [ ] REL-005 Red `install.ps1` の必須file、version一致、checksum、配置先、失敗時非破壊性のtestを追加する
-- [ ] REL-006 Green `install.ps1` を実装し、Chrome実行中のbinary置換失敗を明示して安全に中断する
-- [ ] REL-007 Green `install-with-gh.ps1` を実装し、GitHub Releaseからwindows amd64 assetとchecksumを取得して検証する
-- [ ] REL-008 Docs 未署名binaryとSmartScreen警告、Chrome完全終了、手動extension loadをINSTALLへ記載する
-- [ ] REL-009 Refactor darwinのcodesignとshell installerをOS別release builderへ隔離し、Windows buildから呼ばない
+- [x] REL-001 Red release target `windows-amd64` のartifact構成testを追加する
+- [x] REL-002 Green `cmd/release` に明示的な `--target windows-amd64` を追加する
+- [x] REL-003 Green `CGO_ENABLED=0 GOOS=windows GOARCH=amd64` で `tabcli.exe` を生成する
+- [x] REL-004 Green Windows bundle ZIP、extension ZIP、version metadata、SHA256SUMSを生成する
+- [x] REL-005 Red `install.ps1` の必須file、version一致、checksum、配置先、失敗時非破壊性のtestを追加する
+- [x] REL-006 Green `install.ps1` を実装し、Chrome実行中のbinary置換失敗を明示して安全に中断する
+- [x] REL-007 Green `install-with-gh.ps1` を実装し、GitHub Releaseからwindows amd64 assetとchecksumを取得して検証する
+- [x] REL-008 Docs 未署名binaryとSmartScreen警告、Chrome完全終了、手動extension loadをINSTALLへ記載する
+- [x] REL-009 Refactor darwinのcodesignとshell installerをOS別release builderへ隔離し、Windows buildから呼ばない
 
 ### Phase 4 WindowsリアルChrome統合
 
-- [ ] E2E-001 WindowsのChrome pathをProgram Files、Program Files x86、LOCALAPPDATAの順で解決するhelperを追加する
-- [ ] E2E-002 `integration/real_chrome_test.go` のmacOS固定条件をOS別launcherとregistrationへ分離する
+- [x] E2E-001 WindowsのChrome pathをProgram Files、Program Files x86、LOCALAPPDATAの順で解決するhelperを追加する
+- [x] E2E-002 `integration/real_chrome_test.go` のmacOS固定条件をOS別launcherとregistrationへ分離する
 - [ ] E2E-003 一時HKCU registrationとChrome test profileを使用するWindows integration testを追加する
 - [ ] E2E-004 Native Host handshakeとdiscovery file生成をWindowsで確認する
 - [ ] E2E-005 HTTP MCPと既存CLIによるタブ一覧取得をWindowsで確認する
@@ -533,40 +533,40 @@ sequenceDiagram
 
 ### Phase 5 CLIフラット化
 
-- [ ] CLI-001 Red `list`、`content`、`compare`、`diff`、`close` のrouting testを追加する
+- [x] CLI-001 Red `list`、`content`、`compare`、`diff`、`close` のrouting testを追加する
 - [ ] CLI-002 Red `group list`、`group preview`、`group apply`、`group undo` のrouting testを追加する
-- [ ] CLI-003 Red 旧 `tabs` と `groups` を通常モードとJSONモードの双方で拒否するtestを追加する
-- [ ] CLI-004 Green `internal/cli/cli.go` のdispatchを新コマンドへ変更し、既存handlerへroutingする
-- [ ] CLI-005 Green `flag.NewFlagSet`、usage error、help contextを新コマンド名へ更新する
-- [ ] CLI-006 Contract `internal/tools/catalog.go` の `CLI` と `CLIUsage` を新契約へ更新する
-- [ ] CLI-007 Contract help goldenとcommand metadata testを更新する
+- [x] CLI-003 Red 旧 `tabs` と `groups` を通常モードとJSONモードの双方で拒否するtestを追加する
+- [x] CLI-004 Green `internal/cli/cli.go` のdispatchを新コマンドへ変更し、既存handlerへroutingする
+- [x] CLI-005 Green `flag.NewFlagSet`、usage error、help contextを新コマンド名へ更新する
+- [x] CLI-006 Contract `internal/tools/catalog.go` の `CLI` と `CLIUsage` を新契約へ更新する
+- [x] CLI-007 Contract help goldenとcommand metadata testを更新する
 - [ ] CLI-008 Safety closeの確認必須、preview承認、apply非retryのtestを新command pathで実行する
 
 ### Phase 6 Skill、名称、重複構造の整理
 
-- [ ] CLEAN-001 Skill workflow fixtureを新コマンドへ更新する
-- [ ] CLEAN-002 `skills/tabcli` のSKILL、plan format、agent metadataを新CLI契約へ更新する
-- [ ] CLEAN-003 `cmd/tabctl` と `skills/chrome-tab-organizer` を削除する
-- [ ] CLEAN-004 未使用の `packaging/*.json.tmpl` を削除し、manifest生成元を `internal/install` に一本化する
-- [ ] CLEAN-005 旧実装計画を削除するか、履歴として残す場合はsuperseded表記を付けて通常導線から外す
-- [ ] CLEAN-006 移行説明以外の `tabctl`、`chrome-tab-organizer`、`ChromeTabOrganizer`、旧Native Host名を0件にする
-- [ ] CLEAN-007 `go list ./...` で重複entrypointや意図しないpackageがないことを確認する
+- [x] CLEAN-001 Skill workflow fixtureを新コマンドへ更新する
+- [x] CLEAN-002 `skills/tabcli` のSKILL、plan format、agent metadataを新CLI契約へ更新する
+- [x] CLEAN-003 `cmd/tabctl` と `skills/chrome-tab-organizer` を削除する
+- [x] CLEAN-004 未使用の `packaging/*.json.tmpl` を削除し、manifest生成元を `internal/install` に一本化する
+- [x] CLEAN-005 旧実装計画を削除するか、履歴として残す場合はsuperseded表記を付けて通常導線から外す
+- [x] CLEAN-006 移行説明以外の `tabctl`、`chrome-tab-organizer`、`ChromeTabOrganizer`、旧Native Host名を0件にする
+- [x] CLEAN-007 `go list ./...` で重複entrypointや意図しないpackageがないことを確認する
 
 ### Phase 7 Windowsドキュメントと検証
 
-- [ ] DOC-001 READMEをWindows Quick Startと新CLI例へ更新する
-- [ ] DOC-002 `docs/getting-started-windows.md` を追加し、install、extension load、doctor、uninstallを記載する
-- [ ] DOC-003 `docs/getting-started.md` はmacOS既存ガイドとして明示し、Windows導線を先頭にする
-- [ ] DOC-004 `docs/development.md` をWindows 11、PowerShell、Go、Node.jsの手順へ更新する
-- [ ] DOC-005 要求仕様のOS、CLI、DIST、SKILL要件をWindows-firstへ更新する
-- [ ] DOC-006 macOS再検証を後続計画として記録する
+- [x] DOC-001 READMEをWindows Quick Startと新CLI例へ更新する
+- [x] DOC-002 `docs/getting-started-windows.md` を追加し、install、extension load、doctor、uninstallを記載する
+- [x] DOC-003 `docs/getting-started.md` はmacOS既存ガイドとして明示し、Windows導線を先頭にする
+- [x] DOC-004 `docs/development.md` をWindows 11、PowerShell、Go、Node.jsの手順へ更新する
+- [x] DOC-005 要求仕様のOS、CLI、DIST、SKILL要件をWindows-firstへ更新する
+- [x] DOC-006 macOS再検証を後続計画として記録する
 - [ ] VERIFY-001 Windows上で `gofmt` と既存formatterを実行する
 - [ ] VERIFY-002 Windows上で `go test ./...` を実行する
-- [ ] VERIFY-003 `npm ci`、`npm test`、`npm run typecheck`、`npm run build` を実行する
+- [x] VERIFY-003 `npm ci`、`npm test`、`npm run typecheck`、`npm run build` を実行する
 - [ ] VERIFY-004 WindowsリアルChrome統合テストを実行する
 - [ ] VERIFY-005 windows amd64 Releaseを2回生成し、再現性、checksum、version整合を確認する
 - [ ] VERIFY-006 `tabcli.exe --help` と各commandの `--help` を確認する
-- [ ] VERIFY-007 JSON stdoutへ診断文が混入せず、stderrへ秘密情報が出ないことを確認する
+- [x] VERIFY-007 JSON stdoutへ診断文が混入せず、stderrへ秘密情報が出ないことを確認する
 - [ ] VERIFY-008 docsとSkillの全Windowsコマンド例をsmoke testする
 
 ## 8. 完了の定義 Definition of Done
@@ -576,22 +576,22 @@ sequenceDiagram
 - [ ] Windows 11 x64でcurrent user installとuninstallが完了する
 - [ ] HKCU registrationを使いChrome拡張と `tabcli.exe` が接続できる
 - [ ] WindowsでHTTP MCP、CLI、stdio MCPを利用できる
-- [ ] Windows Release ZIPとPowerShell installerを生成できる
-- [ ] タブ操作はトップレベル、グループ操作は `group` 配下で実行できる
-- [ ] 旧ネストコマンドが意図したエラー契約で拒否される
-- [ ] MCP tool名、schema、protocol versionが変わっていない
-- [ ] closeとgroup applyの安全性契約が維持されている
-- [ ] 固定extension IDが維持されている
+- [x] Windows Release ZIPとPowerShell installerを生成できる
+- [x] タブ操作はトップレベル、グループ操作は `group` 配下で実行できる
+- [x] 旧ネストコマンドが意図したエラー契約で拒否される
+- [x] MCP tool名、schema、protocol versionが変わっていない
+- [x] closeとgroup applyの安全性契約が維持されている
+- [x] 固定extension IDが維持されている
 
 ### 8.2 品質DoD Quality DoD
 
 - [ ] Windows上のGo、TypeScript、contract、integration testがすべてパスしている
 - [ ] Linter、formatter、typecheckのエラーがない
-- [ ] Windows Releaseのchecksumとversion検証が成功する
-- [ ] install失敗時に既存の正常な配置とregistrationを壊さない
+- [x] Windows Releaseのchecksumとversion検証が成功する
+- [x] install失敗時に既存の正常な配置とregistrationを壊さない
 - [ ] integration testがHKCUとtemporary fileを残さない
-- [ ] 旧entrypoint、旧Skill、未使用templateが残っていない
-- [ ] README、要求仕様、Windows利用ガイド、Skill、help goldenが同じCLI契約を示している
+- [x] 旧entrypoint、旧Skill、未使用templateが残っていない
+- [x] README、要求仕様、Windows利用ガイド、Skill、help goldenが同じCLI契約を示している
 - [ ] macOSの既存unit testを壊していない
 
 ## 9. 懸念事項と未確定事項 Concerns and Questions

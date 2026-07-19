@@ -38,3 +38,21 @@ func TestWriteManifest(t *testing.T) {
 		t.Fatalf("manifest = %#v", got)
 	}
 }
+
+func TestWriteManifestReplacesExistingManifest(t *testing.T) {
+	dir := t.TempDir()
+	executable := filepath.Join(dir, "tabcli")
+	if err := os.WriteFile(executable, []byte("binary"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	manifestPath := filepath.Join(dir, buildinfo.NativeManifestFileName)
+	if err := os.WriteFile(manifestPath, []byte(`{"name":"old"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteManifest(manifestPath, executable); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateInstalledManifest(manifestPath, executable); err != nil {
+		t.Fatal(err)
+	}
+}

@@ -15,26 +15,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/masahide/tabcli/internal/buildinfo"
 	"github.com/masahide/tabcli/internal/discovery"
 	"github.com/masahide/tabcli/internal/install"
 	"github.com/masahide/tabcli/internal/mcpclient"
 	"github.com/masahide/tabcli/internal/tools"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 func TestRealChromeNativeHTTPCLIAndStdioMCP(t *testing.T) {
 	if os.Getenv("CHROME_REAL_INTEGRATION") != "1" {
 		t.Skip("set CHROME_REAL_INTEGRATION=1")
 	}
-	if runtime.GOOS != "darwin" {
-		t.Skip("MVP integration target is macOS")
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" {
+		t.Skip("integration target is Windows or macOS")
 	}
 	binary := requirePath(t, "TABCLI_INTEGRATION_BINARY")
 	extension := requirePath(t, "TABCLI_INTEGRATION_EXTENSION")
 	chrome := os.Getenv("CHROME_INTEGRATION_EXECUTABLE")
 	if chrome == "" {
-		chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+		chrome = defaultChromePath()
 	}
 	if _, err := os.Stat(chrome); err != nil {
 		t.Skipf("Chrome Stable unavailable: %v", err)
@@ -43,7 +43,9 @@ func TestRealChromeNativeHTTPCLIAndStdioMCP(t *testing.T) {
 	run(t, binary, "install")
 	t.Cleanup(func() { _ = exec.Command(binary, "uninstall").Run() })
 	profile := filepath.Join(t.TempDir(), "profile")
-	installProfileManifest(t, profile)
+	if runtime.GOOS == "darwin" {
+		installProfileManifest(t, profile)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	launcher, err := filepath.Abs("../extension/scripts/launch-integration-chrome.mjs")
 	if err != nil {
@@ -126,7 +128,7 @@ func TestRealChromeNativeHTTPCLIAndStdioMCP(t *testing.T) {
 		t.Fatalf("direct HTTP MCP: %v", err)
 	}
 	t.Log("direct HTTP MCP call succeeded")
-	cliOutput := run(t, binary, "--json", "tabs", "list")
+	cliOutput := run(t, binary, "--json", "list")
 	var cliResult tools.TabsListResult
 	if err := json.Unmarshal(cliOutput, &cliResult); err != nil {
 		t.Fatalf("CLI JSON: %v: %s", err, cliOutput)
@@ -151,6 +153,24 @@ func TestRealChromeNativeHTTPCLIAndStdioMCP(t *testing.T) {
 		t.Fatalf("stdio MCP call: result=%#v err=%v", result, err)
 	}
 	t.Log("stdio MCP proxy call succeeded")
+}
+
+func defaultChromePath() string {
+	if runtime.GOOS == "darwin" {
+		return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+	}
+	for _, candidate := range []string{
+		filepath.Join(os.Getenv("ProgramFiles"), "Google", "Chrome", "Application", "chrome.exe"),
+		filepath.Join(os.Getenv("ProgramFiles(x86)"), "Google", "Chrome", "Application", "chrome.exe"),
+		filepath.Join(os.Getenv("LOCALAPPDATA"), "Google", "Chrome", "Application", "chrome.exe"),
+	} {
+		if candidate != "" {
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+		}
+	}
+	return filepath.Join(os.Getenv("ProgramFiles"), "Google", "Chrome", "Application", "chrome.exe")
 }
 
 func installProfileManifest(t *testing.T, profile string) {

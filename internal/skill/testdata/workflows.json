@@ -1,44 +1,44 @@
 [
   {
     "utterance": "タブを一覧にして",
-    "tools": ["tabcli --json tabs list"],
+    "tools": ["tabcli --json list"],
     "policy": "read_only",
     "requiresApprovalBeforeApply": false
   },
   {
     "utterance": "放置タブを教えて",
-    "tools": ["tabcli --json tabs list"],
+    "tools": ["tabcli --json list"],
     "policy": "read_only",
     "inactiveForSeconds": 604800,
     "requiresApprovalBeforeApply": false
   },
   {
     "utterance": "既存のグループへ整理して",
-    "tools": ["tabcli --json groups list", "tabcli --json tabs list", "tabcli --json groups preview", "tabcli --json groups apply"],
+    "tools": ["tabcli --json group list", "tabcli --json list", "tabcli --json group preview", "tabcli --json group apply"],
     "policy": "existing_groups_only",
     "requiresApprovalBeforeApply": true
   },
   {
     "utterance": "元に戻して",
-    "tools": ["tabcli --json groups undo"],
+    "tools": ["tabcli --json group undo"],
     "policy": "explicit_mutation",
     "requiresApprovalBeforeApply": false
   },
   {
     "utterance": "この2タブの表示内容が同じか確認して",
-    "tools": ["tabcli --json tabs compare"],
+    "tools": ["tabcli --json compare"],
     "policy": "read_only_hash",
     "requiresApprovalBeforeApply": false
   },
   {
     "utterance": "この2タブの本文の違う箇所だけ見せて",
-    "tools": ["tabcli --json tabs diff"],
+    "tools": ["tabcli --json diff"],
     "policy": "read_only_changed_lines",
     "requiresApprovalBeforeApply": false
   },
   {
     "utterance": "指定したタブを閉じて",
-    "tools": ["tabcli --json tabs list", "tabcli --json tabs close"],
+    "tools": ["tabcli --json list", "tabcli --json close"],
     "policy": "explicit_destructive_mutation",
     "requiresApprovalBeforeApply": false
   }

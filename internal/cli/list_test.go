@@ -31,7 +31,7 @@ func (c fakeCaller) Call(_ context.Context, name string, _ any, output any) erro
 
 func TestTabsListTableOutput(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	exitCode := Run(context.Background(), []string{"tabs", "list"}, fakeCaller{}, &stdout, &stderr)
+	exitCode := Run(context.Background(), []string{"list"}, fakeCaller{}, &stdout, &stderr)
 	if exitCode != ExitOK {
 		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
@@ -44,7 +44,7 @@ func TestTabsListTableOutput(t *testing.T) {
 
 func TestGroupsListJSONOutput(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	exitCode := Run(context.Background(), []string{"groups", "list", "--json"}, fakeCaller{}, &stdout, &stderr)
+	exitCode := Run(context.Background(), []string{"group", "list", "--json"}, fakeCaller{}, &stdout, &stderr)
 	if exitCode != ExitOK {
 		t.Fatalf("exit code = %d, stderr = %q", exitCode, stderr.String())
 	}
@@ -61,7 +61,7 @@ func TestListBrowserDisconnectedExitCode(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	exitCode := Run(
 		context.Background(),
-		[]string{"tabs", "list"},
+		[]string{"list"},
 		fakeCaller{err: tools.NewError(tools.CodeBrowserDisconnected, "Chrome is not connected")},
 		&stdout,
 		&stderr,

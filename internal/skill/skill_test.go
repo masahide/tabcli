@@ -31,7 +31,7 @@ func TestRepresentativeWorkflowFixturesAreDocumented(t *testing.T) {
 				t.Errorf("skill does not document %s for %q", tool, fixture.Utterance)
 			}
 		}
-		if fixture.RequiresApprovalBeforeApply && !strings.Contains(skill, "承認前に`tabcli groups apply`を実行しない") {
+		if fixture.RequiresApprovalBeforeApply && !strings.Contains(skill, "承認前に`tabcli group apply`を実行しない") {
 			t.Errorf("skill lacks the approval boundary")
 		}
 	}

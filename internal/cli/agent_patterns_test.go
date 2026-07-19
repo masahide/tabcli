@@ -38,9 +38,9 @@ func TestAgentJSONUnknownCommandIsStructured(t *testing.T) {
 
 func TestAgentHelpReturnsSuccess(t *testing.T) {
 	for _, arguments := range [][]string{
-		{"tabs", "list", "--help"},
-		{"tabs", "compare", "7", "9", "--help"},
-		{"tabs", "diff", "7", "9", "--help"},
+		{"list", "--help"},
+		{"compare", "7", "9", "--help"},
+		{"diff", "7", "9", "--help"},
 	} {
 		var stdout, stderr bytes.Buffer
 		if exit := Run(context.Background(), arguments, &capturingCaller{}, &stdout, &stderr); exit != ExitOK {
@@ -53,7 +53,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 	t.Run("tabs list", func(t *testing.T) {
 		caller := &capturingCaller{}
 		var stdout, stderr bytes.Buffer
-		exit := Run(context.Background(), []string{"--json", "tabs", "list", "--window", "2", "--ungrouped", "--inactive-for", "7d", "--sort", "created_at", "--sort-order", "desc", "--include-activity"}, caller, &stdout, &stderr)
+		exit := Run(context.Background(), []string{"--json", "list", "--window", "2", "--ungrouped", "--inactive-for", "7d", "--sort", "created_at", "--sort-order", "desc", "--include-activity"}, caller, &stdout, &stderr)
 		if exit != ExitOK {
 			t.Fatalf("exit=%d stderr=%q", exit, stderr.String())
 		}
@@ -66,7 +66,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 	t.Run("tabs content positional before flags", func(t *testing.T) {
 		caller := &capturingCaller{}
 		var stdout, stderr bytes.Buffer
-		exit := Run(context.Background(), []string{"--json", "tabs", "content", "7", "--max-chars", "123"}, caller, &stdout, &stderr)
+		exit := Run(context.Background(), []string{"--json", "content", "7", "--max-chars", "123"}, caller, &stdout, &stderr)
 		if exit != ExitOK {
 			t.Fatalf("exit=%d stderr=%q", exit, stderr.String())
 		}
@@ -79,7 +79,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 	t.Run("tabs compare exact IDs", func(t *testing.T) {
 		caller := &capturingCaller{}
 		var stdout, stderr bytes.Buffer
-		exit := Run(context.Background(), []string{"--json", "tabs", "compare", "7", "9"}, caller, &stdout, &stderr)
+		exit := Run(context.Background(), []string{"--json", "compare", "7", "9"}, caller, &stdout, &stderr)
 		if exit != ExitOK {
 			t.Fatalf("exit=%d stderr=%q", exit, stderr.String())
 		}
@@ -92,7 +92,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 	t.Run("tabs diff exact IDs and bounds", func(t *testing.T) {
 		caller := &capturingCaller{}
 		var stdout, stderr bytes.Buffer
-		exit := Run(context.Background(), []string{"--json", "tabs", "diff", "7", "9", "--max-chars", "321", "--max-diff-chars", "123"}, caller, &stdout, &stderr)
+		exit := Run(context.Background(), []string{"--json", "diff", "7", "9", "--max-chars", "321", "--max-diff-chars", "123"}, caller, &stdout, &stderr)
 		if exit != ExitOK {
 			t.Fatalf("exit=%d stderr=%q", exit, stderr.String())
 		}
@@ -105,7 +105,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 	t.Run("tabs close exact IDs and confirmation", func(t *testing.T) {
 		caller := &capturingCaller{}
 		var stdout, stderr bytes.Buffer
-		exit := Run(context.Background(), []string{"--json", "tabs", "close", "--confirm", "7", "9"}, caller, &stdout, &stderr)
+		exit := Run(context.Background(), []string{"--json", "close", "--confirm", "7", "9"}, caller, &stdout, &stderr)
 		if exit != ExitOK {
 			t.Fatalf("exit=%d stdout=%q stderr=%q", exit, stdout.String(), stderr.String())
 		}
@@ -119,7 +119,7 @@ func TestAgentCLIMapsLiteralFlagsToMCPInputs(t *testing.T) {
 func TestTabsCloseRequiresExplicitConfirmation(t *testing.T) {
 	caller := &capturingCaller{}
 	var stdout, stderr bytes.Buffer
-	exit := Run(context.Background(), []string{"--json", "tabs", "close", "7"}, caller, &stdout, &stderr)
+	exit := Run(context.Background(), []string{"--json", "close", "7"}, caller, &stdout, &stderr)
 	if exit != ExitInvalidArgument || caller.name != "" || !bytes.Contains(stdout.Bytes(), []byte(tools.CodeConfirmationRequired)) {
 		t.Fatalf("exit=%d called=%q stdout=%q stderr=%q", exit, caller.name, stdout.String(), stderr.String())
 	}

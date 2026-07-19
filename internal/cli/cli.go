@@ -78,7 +78,7 @@ type Caller interface {
 
 type Command struct {
 	Caller    Caller
-	Install   func() (string, error)
+	Install   func() (any, error)
 	Uninstall func() (any, error)
 	Status    func() (any, error)
 	Doctor    func() (any, error)
@@ -121,14 +121,23 @@ func (command Command) Run(ctx context.Context, args []string, stdout, stderr io
 		if command.Install == nil {
 			return command.writeError(stdout, stderr, errors.New("install is unavailable"))
 		}
-		path, err := command.Install()
+		result, err := command.Install()
 		if err != nil {
 			return command.writeError(stdout, stderr, err)
 		}
 		if command.JSON {
-			return writeJSON(stdout, map[string]any{"manifestPath": path}, stderr)
+			return writeJSON(stdout, result, stderr)
 		}
-		fmt.Fprintf(stdout, "Installed Native Messaging manifest: %s\n", path)
+		encoded, _ := json.Marshal(result)
+		var installed struct {
+			ManifestPath string `json:"manifestPath"`
+			RegistryKey  string `json:"registryKey"`
+		}
+		_ = json.Unmarshal(encoded, &installed)
+		fmt.Fprintf(stdout, "Installed Native Messaging manifest: %s\n", installed.ManifestPath)
+		if installed.RegistryKey != "" {
+			fmt.Fprintf(stdout, "Registered Native Messaging host: %s\n", installed.RegistryKey)
+		}
 		return ExitOK
 	case "uninstall":
 		if len(args) != 1 {
@@ -191,23 +200,17 @@ func (command Command) Run(ctx context.Context, args []string, stdout, stderr io
 		}
 		fmt.Fprintln(stdout, formatVersion(command.Version))
 		return ExitOK
-	case "tabs":
-		if len(args) >= 2 && args[1] == "list" {
-			return command.listTabs(ctx, args[2:], stdout, stderr)
-		}
-		if len(args) >= 2 && args[1] == "content" {
-			return command.getContent(ctx, args[2:], stdout, stderr)
-		}
-		if len(args) >= 2 && args[1] == "compare" {
-			return command.compareContent(ctx, args[2:], stdout, stderr)
-		}
-		if len(args) >= 2 && args[1] == "diff" {
-			return command.diffContent(ctx, args[2:], stdout, stderr)
-		}
-		if len(args) >= 2 && args[1] == "close" {
-			return command.closeTabs(ctx, args[2:], stdout, stderr)
-		}
-	case "groups":
+	case "list":
+		return command.listTabs(ctx, args[1:], stdout, stderr)
+	case "content":
+		return command.getContent(ctx, args[1:], stdout, stderr)
+	case "compare":
+		return command.compareContent(ctx, args[1:], stdout, stderr)
+	case "diff":
+		return command.diffContent(ctx, args[1:], stdout, stderr)
+	case "close":
+		return command.closeTabs(ctx, args[1:], stdout, stderr)
+	case "group":
 		if len(args) >= 2 && args[1] == "list" {
 			return command.listGroups(ctx, args[2:], stdout, stderr)
 		}
@@ -229,7 +232,7 @@ func (command Command) Run(ctx context.Context, args []string, stdout, stderr io
 }
 
 func (command Command) compareContent(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tabs compare", flag.ContinueOnError)
+	flags := flag.NewFlagSet("compare", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	flagArguments, positionalArguments := splitComparisonArguments(args)
@@ -262,7 +265,7 @@ func (command Command) compareContent(ctx context.Context, args []string, stdout
 }
 
 func (command Command) diffContent(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tabs diff", flag.ContinueOnError)
+	flags := flag.NewFlagSet("diff", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	maxCharacters := flags.Int("max-chars", 50_000, "maximum transient source characters per tab")
@@ -346,7 +349,7 @@ func splitComparisonArguments(arguments []string) ([]string, []string) {
 }
 
 func (command Command) closeTabs(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tabs close", flag.ContinueOnError)
+	flags := flag.NewFlagSet("close", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	confirmed := flags.Bool("confirm", false, "confirm closing the exact tab IDs")
 	jsonOutput := flags.Bool("json", false, "print JSON")
@@ -363,7 +366,7 @@ func (command Command) closeTabs(ctx context.Context, args []string, stdout, std
 		return command.writeError(stdout, stderr, tools.NewError(tools.CodeConfirmationRequired, "--confirm is required to close tabs"))
 	}
 	if flags.NArg() == 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "usage: tabcli tabs close --confirm TAB_ID [TAB_ID ...]"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "usage: tabcli close --confirm TAB_ID [TAB_ID ...]"))
 	}
 	tabIDs := make([]int, 0, flags.NArg())
 	for _, argument := range flags.Args() {
@@ -443,7 +446,7 @@ func formatVersion(value any) string {
 }
 
 func (command Command) applyGroups(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("groups apply", flag.ContinueOnError)
+	flags := flag.NewFlagSet("group apply", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	previewID := flags.String("preview-id", "", "approved preview ID")
 	jsonOutput := flags.Bool("json", false, "print JSON")
@@ -457,7 +460,7 @@ func (command Command) applyGroups(ctx context.Context, args []string, stdout, s
 		return ExitUsage
 	}
 	if flags.NArg() != 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "groups apply does not accept positional arguments"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "group apply does not accept positional arguments"))
 	}
 	if *previewID == "" {
 		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "--preview-id is required"))
@@ -474,7 +477,7 @@ func (command Command) applyGroups(ctx context.Context, args []string, stdout, s
 }
 
 func (command Command) undoGroups(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("groups undo", flag.ContinueOnError)
+	flags := flag.NewFlagSet("group undo", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	if err := flags.Parse(args); err != nil {
@@ -487,7 +490,7 @@ func (command Command) undoGroups(ctx context.Context, args []string, stdout, st
 		return ExitUsage
 	}
 	if flags.NArg() != 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "groups undo does not accept arguments"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "group undo does not accept arguments"))
 	}
 	var result tools.UndoResult
 	if err := command.Caller.Call(ctx, tools.ToolChromeTabGroupsUndo, tools.UndoInput{}, &result); err != nil {
@@ -501,7 +504,7 @@ func (command Command) undoGroups(ctx context.Context, args []string, stdout, st
 }
 
 func (command Command) previewGroups(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("groups preview", flag.ContinueOnError)
+	flags := flag.NewFlagSet("group preview", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	planPath := flags.String("plan", "", "classification plan JSON file")
 	jsonOutput := flags.Bool("json", false, "print JSON")
@@ -515,7 +518,7 @@ func (command Command) previewGroups(ctx context.Context, args []string, stdout,
 		return ExitUsage
 	}
 	if flags.NArg() != 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "groups preview does not accept positional arguments"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "group preview does not accept positional arguments"))
 	}
 	if *planPath == "" {
 		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "--plan is required"))
@@ -545,7 +548,7 @@ func (command Command) previewGroups(ctx context.Context, args []string, stdout,
 }
 
 func (command Command) getContent(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tabs content", flag.ContinueOnError)
+	flags := flag.NewFlagSet("content", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	maxCharacters := flags.Int("max-chars", 10_000, "maximum visible-text characters")
@@ -570,7 +573,7 @@ func (command Command) getContent(ctx context.Context, args []string, stdout, st
 		tabArgument = ""
 	}
 	if tabArgument == "" {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "usage: tabcli tabs content <tabId> [--max-chars N] [--json]"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "usage: tabcli content TAB_ID [--max-chars N] [--json]"))
 	}
 	tabID, err := strconv.Atoi(tabArgument)
 	if err != nil || tabID <= 0 {
@@ -592,7 +595,7 @@ func (command Command) getContent(ctx context.Context, args []string, stdout, st
 }
 
 func (command Command) listTabs(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tabs list", flag.ContinueOnError)
+	flags := flag.NewFlagSet("list", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	inactiveFor := flags.String("inactive-for", "", "minimum inactivity such as 7d")
@@ -612,7 +615,7 @@ func (command Command) listTabs(ctx context.Context, args []string, stdout, stde
 		return ExitUsage
 	}
 	if flags.NArg() != 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "tabs list does not accept positional arguments"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "list does not accept positional arguments"))
 	}
 	input := tools.TabsListInput{Ungrouped: *ungrouped, SortBy: tools.TabsSort(*sortBy), SortOrder: tools.SortOrder(*sortOrder), IncludeActivity: *includeActivity}
 	if *windowID < 0 || *groupID < 0 {
@@ -672,7 +675,7 @@ func ParseDuration(value string) (time.Duration, error) {
 }
 
 func (command Command) listGroups(ctx context.Context, args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("groups list", flag.ContinueOnError)
+	flags := flag.NewFlagSet("group list", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	jsonOutput := flags.Bool("json", false, "print JSON")
 	windowID := flags.Int("window", 0, "limit results to one window ID")
@@ -686,7 +689,7 @@ func (command Command) listGroups(ctx context.Context, args []string, stdout, st
 		return ExitUsage
 	}
 	if flags.NArg() != 0 {
-		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "groups list does not accept positional arguments"))
+		return command.writeError(stdout, stderr, tools.NewError(tools.CodeInvalidArgument, "group list does not accept positional arguments"))
 	}
 	input := tools.GroupsListInput{}
 	if *windowID < 0 {

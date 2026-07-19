@@ -17,6 +17,7 @@ func TestDetectMode(t *testing.T) {
 		{name: "ordinary CLI", args: []string{"tabs", "list"}, want: ModeCLI},
 		{name: "no arguments is CLI", args: nil, want: ModeCLI},
 		{name: "allowed Chrome extension origin", args: []string{allowedOrigin}, want: ModeNativeHost},
+		{name: "Windows origin and parent window", args: []string{allowedOrigin, "--parent-window=0"}, want: ModeNativeHost},
 		{name: "unapproved Chrome extension origin", args: []string{"chrome-extension://zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz/"}, wantErr: ErrOriginNotAllowed},
 		{name: "malformed Chrome extension origin", args: []string{"chrome-extension://abcdefghijklmnopabcdefghijklmnop/not-root"}, wantErr: ErrOriginNotAllowed},
 	}

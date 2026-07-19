@@ -24,6 +24,7 @@ type BuildConfig struct {
 	Commit        string
 	Timestamp     time.Time
 	Architectures []string
+	Target        string
 	Stdout        io.Writer
 	Stderr        io.Writer
 }
@@ -87,6 +88,12 @@ func Build(config BuildConfig) error {
 			return err
 		}
 	}
+	if config.Target == "windows-amd64" {
+		return buildWindows(config, root, out, extensionRoot)
+	}
+	if config.Target != "" && config.Target != "darwin" {
+		return fmt.Errorf("unsupported release target %q", config.Target)
+	}
 
 	binaries := make(map[string]string, len(config.Architectures))
 	for _, architecture := range config.Architectures {
@@ -134,7 +141,7 @@ func Build(config BuildConfig) error {
 		return err
 	}
 
-	instructions := "tabcli (macOS, ad-hoc signed; no Developer ID or notarization)\n\n1. Extract the archive for this Mac: arm64 for Apple silicon, amd64 for Intel.\n2. Run: ./install.sh\n3. Open chrome://extensions and enable Developer mode.\n4. Choose Load unpacked and select the extension directory printed by the installer.\n5. Confirm extension ID " + buildinfo.ExtensionID + ".\n6. Reload the extension or restart Chrome.\n7. Run: ~/.local/bin/tabcli --json doctor\n8. Try: ~/.local/bin/tabcli --json tabs list\n\nThe installer verifies the ad-hoc signature and matching CLI/extension versions before installing.\nUninstall: run ~/.local/bin/tabcli uninstall, then remove the extension in chrome://extensions.\n"
+	instructions := "tabcli (macOS, ad-hoc signed; no Developer ID or notarization)\n\n1. Extract the archive for this Mac: arm64 for Apple silicon, amd64 for Intel.\n2. Run: ./install.sh\n3. Open chrome://extensions and enable Developer mode.\n4. Choose Load unpacked and select the extension directory printed by the installer.\n5. Confirm extension ID " + buildinfo.ExtensionID + ".\n6. Reload the extension or restart Chrome.\n7. Run: ~/.local/bin/tabcli --json doctor\n8. Try: ~/.local/bin/tabcli --json list\n\nThe installer verifies the ad-hoc signature and matching CLI/extension versions before installing.\nUninstall: run ~/.local/bin/tabcli uninstall, then remove the extension in chrome://extensions.\n"
 	if err := os.WriteFile(filepath.Join(out, "INSTALL.txt"), []byte(instructions), 0o600); err != nil {
 		return err
 	}
@@ -183,6 +190,94 @@ func Build(config BuildConfig) error {
 		return err
 	}
 	return writeChecksums(out)
+}
+
+func buildWindows(config BuildConfig, root, out, extensionRoot string) error {
+	binary := filepath.Join(out, "tabcli.exe")
+	ldflags := strings.Join([]string{"-s", "-w", "-X", "github.com/masahide/tabcli/internal/buildinfo.Version=" + config.Version, "-X", "github.com/masahide/tabcli/internal/buildinfo.Commit=" + config.Commit, "-X", "github.com/masahide/tabcli/internal/buildinfo.BuiltAt=" + config.Timestamp.UTC().Format(time.RFC3339)}, " ")
+	environment := []string{"CGO_ENABLED=0", "GOOS=windows", "GOARCH=amd64"}
+	if err := runCommand(root, config.Stdout, config.Stderr, environment, "go", "build", "-trimpath", "-buildvcs=false", "-ldflags", ldflags, "-o", binary, "./cmd/tabcli"); err != nil {
+		return err
+	}
+	unpacked := filepath.Join(out, "tabcli-extension-unpacked")
+	if err := copyExtension(extensionRoot, unpacked); err != nil {
+		return err
+	}
+	if err := ValidateArtifacts(out); err != nil {
+		return err
+	}
+	files, err := FilesUnder(unpacked)
+	if err != nil {
+		return err
+	}
+	if err := DeterministicZip(filepath.Join(out, "tabcli-extension.zip"), unpacked, files, config.Timestamp); err != nil {
+		return err
+	}
+	instructions := "tabcli for Windows 11 x64\n\n1. Completely exit Google Chrome before updating.\n2. Extract this ZIP and run install.ps1 in PowerShell.\n3. Open chrome://extensions and enable Developer mode.\n4. Load the unpacked extension directory printed by the installer.\n5. Confirm extension ID " + buildinfo.ExtensionID + ".\n6. Run tabcli.exe --json doctor, then tabcli.exe --json list.\n\nThe binary is not Authenticode-signed and Windows SmartScreen may warn. The installer never terminates Chrome and does not modify PATH.\n"
+	if err := os.WriteFile(filepath.Join(out, "INSTALL.txt"), []byte(instructions), 0o600); err != nil {
+		return err
+	}
+	metadata := Metadata{
+		Version: config.Version, Commit: config.Commit, BuiltAt: config.Timestamp.UTC().Format(time.RFC3339),
+		Targets: []string{"windows/amd64"}, ExtensionID: buildinfo.ExtensionID,
+		ProtocolVersion: buildinfo.ProtocolVersion, MinimumChromeVersion: "121",
+	}
+	data, _ := json.MarshalIndent(metadata, "", "  ")
+	if err := os.WriteFile(filepath.Join(out, "version.json"), append(data, '\n'), 0o600); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(root, "scripts", "install.ps1"), filepath.Join(out, "install.ps1"), 0o600); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(root, "scripts", "install-with-gh.ps1"), filepath.Join(out, "install-with-gh.ps1"), 0o600); err != nil {
+		return err
+	}
+	bundleRoot := filepath.Join(out, ".bundle-windows-amd64")
+	if err := os.MkdirAll(bundleRoot, 0o700); err != nil {
+		return err
+	}
+	for _, name := range []string{"tabcli.exe", "tabcli-extension.zip", "INSTALL.txt", "install.ps1", "version.json"} {
+		if err := copyFile(filepath.Join(out, name), filepath.Join(bundleRoot, name), 0o600); err != nil {
+			return err
+		}
+	}
+	if err := ValidateArtifacts(bundleRoot); err != nil {
+		return err
+	}
+	bundleFiles, err := FilesUnder(bundleRoot)
+	if err != nil {
+		return err
+	}
+	bundle := filepath.Join(out, fmt.Sprintf("tabcli-%s-windows-amd64.zip", config.Version))
+	if err := DeterministicZip(bundle, bundleRoot, bundleFiles, config.Timestamp); err != nil {
+		return err
+	}
+	if err := os.RemoveAll(bundleRoot); err != nil {
+		return err
+	}
+	if err := ValidateArtifacts(out); err != nil {
+		return err
+	}
+	return writeChecksums(out)
+}
+
+func copyExtension(extensionRoot, unpacked string) error {
+	if err := copyFile(filepath.Join(extensionRoot, "manifest.json"), filepath.Join(unpacked, "manifest.json"), 0o600); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(extensionRoot, "options.html"), filepath.Join(unpacked, "options.html"), 0o600); err != nil {
+		return err
+	}
+	files, err := FilesUnder(filepath.Join(extensionRoot, "dist"))
+	if err != nil {
+		return err
+	}
+	for _, relative := range files {
+		if err := copyFile(filepath.Join(extensionRoot, "dist", relative), filepath.Join(unpacked, "dist", relative), 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validateSourceRevision(root, commit string) error {
@@ -238,7 +333,7 @@ func runCommand(directory string, stdout, stderr io.Writer, extraEnvironment []s
 	return nil
 }
 
-const tabcliCodeSignIdentifier = "io.github.yamasaki_masahide_cyg.tabcli.tabcli"
+const tabcliCodeSignIdentifier = "io.github.masahide.tabcli.tabcli"
 
 func adHocSignDarwinBinary(path string, stdout, stderr io.Writer) error {
 	if err := runCommand(filepath.Dir(path), stdout, stderr, nil,

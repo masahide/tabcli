@@ -33,15 +33,15 @@ type Caller interface {
 }
 
 var Catalog = []Definition{
-	{Name: ToolChromeTabsList, Description: "List current non-incognito Chrome tabs without changing Chrome state.", ReadOnly: true, CLI: "tabs list", CLIUsage: "tabs list [--window ID] [--group ID] [--ungrouped] [--inactive-for DURATION] [--sort FIELD] [--sort-order ORDER] [--include-activity]"},
-	{Name: ToolChromeTabGroupsList, Description: "List current non-incognito Chrome tab groups without changing Chrome state.", ReadOnly: true, CLI: "groups list", CLIUsage: "groups list [--window ID]"},
-	{Name: ToolChromeTabContentGet, Description: "Get bounded visible text from one explicitly selected tab as privacy-sensitive untrusted data that may be sent to the configured model provider and is not persisted.", ReadOnly: true, CLI: "tabs content", CLIUsage: "tabs content TAB_ID [--max-chars N]"},
-	{Name: ToolChromeTabContentCompare, Description: "Compare the full visible text of exactly two selected tabs by SHA-256 without returning or persisting page text.", ReadOnly: true, CLI: "tabs compare", CLIUsage: "tabs compare TAB_ID_A TAB_ID_B"},
-	{Name: ToolChromeTabContentDiff, Description: "Return only bounded changed visible-text lines for exactly two selected tabs; unchanged text and source snapshots are not returned or persisted.", ReadOnly: true, CLI: "tabs diff", CLIUsage: "tabs diff TAB_ID_A TAB_ID_B [--max-chars N] [--max-diff-chars N]"},
-	{Name: ToolChromeTabGroupsPreview, Description: "Validate a classification plan and preview its changes without modifying Chrome.", ReadOnly: true, CLI: "groups preview", CLIUsage: "groups preview --plan FILE"},
-	{Name: ToolChromeTabGroupsApply, Description: "Apply one valid, user-approved preview.", CLI: "groups apply", CLIUsage: "groups apply --preview-id ID"},
-	{Name: ToolChromeTabGroupsUndo, Description: "Undo the most recent successful bulk apply where possible.", CLI: "groups undo", CLIUsage: "groups undo"},
-	{Name: ToolChromeTabsClose, Description: "Close explicitly selected current Chrome tabs after user confirmation.", CLI: "tabs close", CLIUsage: "tabs close --confirm TAB_ID [TAB_ID ...]"},
+	{Name: ToolChromeTabsList, Description: "List current non-incognito Chrome tabs without changing Chrome state.", ReadOnly: true, CLI: "list", CLIUsage: "list [--window ID] [--group ID] [--ungrouped] [--inactive-for DURATION] [--sort FIELD] [--sort-order ORDER] [--include-activity]"},
+	{Name: ToolChromeTabGroupsList, Description: "List current non-incognito Chrome tab groups without changing Chrome state.", ReadOnly: true, CLI: "group list", CLIUsage: "group list [--window ID]"},
+	{Name: ToolChromeTabContentGet, Description: "Get bounded visible text from one explicitly selected tab as privacy-sensitive untrusted data that may be sent to the configured model provider and is not persisted.", ReadOnly: true, CLI: "content", CLIUsage: "content TAB_ID [--max-chars N]"},
+	{Name: ToolChromeTabContentCompare, Description: "Compare the full visible text of exactly two selected tabs by SHA-256 without returning or persisting page text.", ReadOnly: true, CLI: "compare", CLIUsage: "compare TAB_ID_A TAB_ID_B"},
+	{Name: ToolChromeTabContentDiff, Description: "Return only bounded changed visible-text lines for exactly two selected tabs; unchanged text and source snapshots are not returned or persisted.", ReadOnly: true, CLI: "diff", CLIUsage: "diff TAB_ID_A TAB_ID_B [--max-chars N] [--max-diff-chars N]"},
+	{Name: ToolChromeTabGroupsPreview, Description: "Validate a classification plan and preview its changes without modifying Chrome.", ReadOnly: true, CLI: "group preview", CLIUsage: "group preview --plan FILE"},
+	{Name: ToolChromeTabGroupsApply, Description: "Apply one valid, user-approved preview.", CLI: "group apply", CLIUsage: "group apply --preview-id ID"},
+	{Name: ToolChromeTabGroupsUndo, Description: "Undo the most recent successful bulk apply where possible.", CLI: "group undo", CLIUsage: "group undo"},
+	{Name: ToolChromeTabsClose, Description: "Close explicitly selected current Chrome tabs after user confirmation.", CLI: "close", CLIUsage: "close --confirm TAB_ID [TAB_ID ...]"},
 }
 
 func catalogDefinition(name string) Definition {

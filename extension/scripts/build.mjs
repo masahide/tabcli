@@ -1,4 +1,5 @@
 import { mkdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
 const outdir = new URL("../dist/", import.meta.url);
@@ -6,10 +7,10 @@ await mkdir(outdir, { recursive: true });
 
 await build({
   entryPoints: {
-    "service-worker": new URL("../src/service-worker.ts", import.meta.url).pathname,
-    options: new URL("../src/options.ts", import.meta.url).pathname,
+    "service-worker": fileURLToPath(new URL("../src/service-worker.ts", import.meta.url)),
+    options: fileURLToPath(new URL("../src/options.ts", import.meta.url)),
   },
-  outdir: outdir.pathname,
+  outdir: fileURLToPath(outdir),
   bundle: true,
   format: "esm",
   platform: "browser",

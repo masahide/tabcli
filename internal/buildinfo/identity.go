@@ -1,7 +1,11 @@
 package buildinfo
 
 const (
-	NativeHostName         = "io.github.yamasaki_masahide_cyg.tabcli"
+	ProductName            = "tabcli"
+	ProductDirectoryName   = "tabcli"
+	NativeHostName         = "io.github.masahide.tabcli"
+	NativeManifestFileName = NativeHostName + ".json"
+	WindowsRegistryKey     = `HKCU\Software\Google\Chrome\NativeMessagingHosts\` + NativeHostName
 	ExtensionID            = "ddgfmgclndpdobieomcjaklboinbaoel"
 	AllowedExtensionOrigin = "chrome-extension://" + ExtensionID + "/"
 	ProfileID              = "default"

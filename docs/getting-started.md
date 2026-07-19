@@ -1,5 +1,7 @@
 # tabcliをmacOSで試す
 
+Windows 11向けの先行手順は[Windowsインストール・利用ガイド](getting-started-windows.md)を参照する。この文書は後続再検証対象である既存macOS版のガイドとして残す。
+
 この手順では、GitHub ReleaseからDeveloper ID未署名・アドホック署名済みのmacOS用バイナリとunpacked Chrome拡張機能を取得し、現在のユーザーだけにインストールする。notarizationは行わない。
 
 ## 1. 前提環境

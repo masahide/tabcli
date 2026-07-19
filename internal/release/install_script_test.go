@@ -17,6 +17,49 @@ func TestReleaseInstallScriptSyntax(t *testing.T) {
 	}
 }
 
+func TestWindowsInstallScriptsContainSafetyAndVerificationContracts(t *testing.T) {
+	installer, err := os.ReadFile("../../scripts/install.ps1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bootstrap, err := os.ReadFile("../../scripts/install-with-gh.ps1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, marker := range []string{"LOCALAPPDATA", "Programs\\tabcli", "Completely exit Google Chrome", "tabcli-extension.zip", "version.json"} {
+		if !strings.Contains(string(installer), marker) {
+			t.Errorf("install.ps1 lacks %q", marker)
+		}
+	}
+	for _, marker := range []string{"windows-amd64.zip", "SHA256SUMS", "Get-FileHash", "install.ps1"} {
+		if !strings.Contains(string(bootstrap), marker) {
+			t.Errorf("install-with-gh.ps1 lacks %q", marker)
+		}
+	}
+}
+
+func TestWindowsReleasePublisherContainsBuildVerificationAndExplicitPublishGate(t *testing.T) {
+	script, err := os.ReadFile("../../scripts/publish-windows-release.ps1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, marker := range []string{
+		"--target\", \"windows-amd64",
+		"SHA256SUMS",
+		"Get-FileHash",
+		"version.json",
+		"[switch]$Publish",
+		"\"release\", \"create\", $tag",
+		"Invoke-Native \"gh\" $releaseArguments",
+		"git\" @(\"push",
+		"--verify-tag",
+	} {
+		if !strings.Contains(string(script), marker) {
+			t.Errorf("publish-windows-release.ps1 lacks %q", marker)
+		}
+	}
+}
+
 func TestValidateExtensionVersion(t *testing.T) {
 	root := t.TempDir()
 	for _, name := range []string{"manifest.json", "package.json"} {

@@ -1,93 +1,57 @@
 # tabcli開発者ガイド
 
-この資料では、macOSでソースからビルドし、開発用成果物を手動インストールする手順を説明する。一般利用者は[macOSインストール・利用ガイド](getting-started.md)を参照する。
+Windows 11 x64を先行開発・配布対象とする。Go 1.25、Node.js 24、npm、PowerShell 5.1以降、Google Chrome Stable 121以降を用意する。
 
-## 前提環境
+## 検証
 
-- macOS（Apple siliconまたはIntel）
-- Go 1.25以降
-- Node.js 24とnpm
-- Google Chrome 121以降
-
-```bash
-go version
-node --version
-npm --version
-uname -m
+```powershell
+go test ./...
+Set-Location extension
+npm ci
+npm test
+npm run typecheck
+npm run build
+Set-Location ..
 ```
 
-## ソースからビルド
+Windows用バイナリだけを作る場合:
 
-リポジトリrootで実行する。
-
-```bash
-go run ./cmd/release --out dist --version 0.3.0
+```powershell
+$env:CGO_ENABLED = "0"
+$env:GOOS = "windows"
+$env:GOARCH = "amd64"
+go build -o .\dist\tabcli.exe .\cmd\tabcli
 ```
 
-このコマンドはGo・TypeScriptのテストとtypecheckも実行し、次の成果物を`dist/`へ生成する。
+## Release
 
-- `tabcli-darwin-arm64`
-- `tabcli-darwin-amd64`
-- `tabcli-extension-unpacked/`
-- `tabcli-extension.zip`
-- CPU別配布ZIP
-- `install-with-gh.sh`
-- `SHA256SUMS`
-- `version.json`
-- `INSTALL.txt`
+cleanなHEADとextensionのversionを指定versionへ揃え、次を実行する。
 
-checksumを確認する。
-
-```bash
-cd dist
-shasum -a 256 -c SHA256SUMS
-cd ..
+```powershell
+.\scripts\publish-windows-release.ps1 -Version 0.3.0
 ```
 
-両CPU向けバイナリはrelease entrypoint内でidentity不要のアドホック署名を付け、`codesign --verify --strict`まで実行する。Developer ID署名とnotarizationは行わない。
+`dist`には`tabcli.exe`、`tabcli-extension.zip`、`install.ps1`、`install-with-gh.ps1`、`version.json`、`INSTALL.txt`、`SHA256SUMS`、`tabcli-VERSION-windows-amd64.zip`が生成される。Release entrypointはGo/TypeScriptテスト、extension ID検証、Windows amd64クロスビルド、再現可能ZIP生成、秘密情報検査を行う。
 
-## ソースビルドしたtabcliをインストール
+通常実行はビルドと成果物検証だけを行い、GitHubへ変更を加えない。検証後、同じcleanなHEADから`-Publish`を付けて実行すると、`vVERSION` annotated tagを作成して`origin`へpushし、`gh release create`でWindows成果物を公開する。
 
-Apple siliconの場合:
-
-```bash
-mkdir -p "$HOME/.local/bin"
-install -m 755 dist/tabcli-darwin-arm64 "$HOME/.local/bin/tabcli.new"
-codesign --verify --strict --verbose=2 "$HOME/.local/bin/tabcli.new"
-mv -f "$HOME/.local/bin/tabcli.new" "$HOME/.local/bin/tabcli"
-"$HOME/.local/bin/tabcli" install
+```powershell
+.\scripts\publish-windows-release.ps1 -Version 0.3.0 -Publish
 ```
 
-Intel Macの場合は`tabcli-darwin-arm64`を`tabcli-darwin-amd64`へ置き換える。
+公開には`gh auth status`が成功する認証が必要となる。すでに同じHEADを指すtagが存在する場合は再利用するため、tag push後にRelease作成だけが失敗した場合も再実行できる。別commitを指す同名tagや既存Releaseがある場合は安全のため失敗する。
 
-最終パスの実行ファイルを`cp`やリダイレクトで直接上書きしない。ChromeがNative Hostとして実行中のinodeを書き換えるとmacOSがコード署名不整合としてプロセスを終了する可能性があるため、一時ファイルを検証してから同じdirectory内で`mv`する。
+## Windows実機統合
 
-`tabcli install`は現在ユーザーのChrome Native Messaging manifestだけを作成する。manifestには実行中の`tabcli`の絶対パスが保存されるため、バイナリを移動した場合は移動先から再度実行する。
+配布物を作成してChromeを終了した状態からインストールし、unpacked extensionを読み込む。自動統合テストは明示的に有効化する。
 
-Chromeでは`chrome://extensions`を開き、デベロッパーモードを有効にして、`dist/tabcli-extension-unpacked`を読み込む。
-
-## GitHub Releaseを作成
-
-`extension/manifest.json`と`extension/package.json`のversionを一致させ、cleanな`main`で次を実行する。
-
-```bash
-VERSION=0.3.0
-COMMIT="$(git rev-parse HEAD)"
-test -z "$(git status --porcelain)"
-go run ./cmd/release --out dist --version "$VERSION" --commit "$COMMIT"
-(cd dist && shasum -a 256 -c SHA256SUMS)
-git tag -a "v$VERSION" "$COMMIT" -m "tabcli $VERSION"
-git push origin "v$VERSION"
-gh release create "v$VERSION" \
-  dist/tabcli-*.zip \
-  dist/tabcli-darwin-* \
-  dist/SHA256SUMS \
-  dist/version.json \
-  dist/INSTALL.txt \
-  dist/install-with-gh.sh \
-  --title "tabcli $VERSION" \
-  --generate-notes \
-  --verify-tag
+```powershell
+$env:CHROME_REAL_INTEGRATION = "1"
+$env:TABCLI_INTEGRATION_BINARY = (Resolve-Path .\dist\tabcli.exe)
+$env:TABCLI_INTEGRATION_EXTENSION = (Resolve-Path .\dist\tabcli-extension-unpacked)
+go test -tags integration .\integration -v
 ```
 
-release entrypointはテスト、両CPUのビルド、アドホック署名、checksum、成果物検査に加え、作業ツリーがcleanであること、指定commitがHEADと一致すること、指定versionと拡張機能のmanifest・package versionが一致することを検証する。いずれかが失敗した場合はタグとReleaseを作成しない。
+テストはHKCUのcanonical Native Messaging登録、discovery生成、HTTP MCP、`tabcli --json list`、stdio MCPを確認する。終了時はテスト用profileと製品が管理する登録だけを削除する。
+
+macOSの既存コードとunit testは維持するが、codesign、notarization、実機統合、Release再検証はWindows MVP後の後続作業とする。

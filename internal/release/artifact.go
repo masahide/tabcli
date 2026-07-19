@@ -78,7 +78,7 @@ func ValidateArtifacts(root string) error {
 
 func isTextArtifact(extension string) bool {
 	switch extension {
-	case ".json", ".js", ".mjs", ".html", ".css", ".txt", ".md", ".yaml", ".yml", ".sh":
+	case ".json", ".js", ".mjs", ".html", ".css", ".txt", ".md", ".yaml", ".yml", ".sh", ".ps1":
 		return true
 	default:
 		return false

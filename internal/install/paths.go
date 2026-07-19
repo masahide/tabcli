@@ -1,37 +1,25 @@
 package install
 
 import (
-	"os"
 	"path/filepath"
-	"runtime"
+
+	"github.com/masahide/tabcli/internal/buildinfo"
 )
 
-func ProductDirectory() (string, error) {
-	if runtime.GOOS != "darwin" {
-		return "", &UnsupportedOSError{OS: runtime.GOOS}
-	}
-	config, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return ProductDirectoryIn(config), nil
-}
-
-func ProductDirectoryIn(config string) string { return filepath.Join(config, "ChromeTabOrganizer") }
-
-func NativeMessagingManifest() (string, error) {
-	if runtime.GOOS != "darwin" {
-		return "", &UnsupportedOSError{OS: runtime.GOOS}
-	}
-	config, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return NativeMessagingManifestIn(config), nil
+func ProductDirectoryIn(config string) string {
+	return filepath.Join(config, buildinfo.ProductDirectoryName)
 }
 
 func NativeMessagingManifestIn(config string) string {
-	return filepath.Join(config, "Google", "Chrome", "NativeMessagingHosts", "io.github.yamasaki_masahide_cyg.tabcli.json")
+	return filepath.Join(config, "Google", "Chrome", "NativeMessagingHosts", buildinfo.NativeManifestFileName)
+}
+
+func WindowsProductDirectoryIn(localAppData string) string {
+	return filepath.Join(localAppData, buildinfo.ProductDirectoryName)
+}
+
+func WindowsNativeMessagingManifestIn(localAppData string) string {
+	return filepath.Join(WindowsProductDirectoryIn(localAppData), "native-messaging", buildinfo.NativeManifestFileName)
 }
 
 type UnsupportedOSError struct{ OS string }

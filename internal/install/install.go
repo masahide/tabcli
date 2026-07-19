@@ -24,6 +24,7 @@ type DoctorOptions struct {
 	ExecutablePath string
 	ManifestPath   string
 	DiscoveryPath  string
+	CheckRegistry  func() error
 	CheckChrome    func() error
 	CheckMCP       func() error
 }
@@ -54,13 +55,19 @@ func Diagnose(options DoctorOptions) DoctorResult {
 	for _, check := range []struct {
 		name string
 		path string
-	}{{"executable", options.ExecutablePath}, {"native_manifest", options.ManifestPath}, {"discovery", options.DiscoveryPath}} {
+	}{{"executable", options.ExecutablePath}, {"native_manifest", options.ManifestPath}} {
 		_, err := os.Lstat(check.path)
 		if err == nil && check.name == "native_manifest" {
 			err = validateInstalledManifest(check.path, options.ExecutablePath)
 		}
 		result.Checks = append(result.Checks, DoctorCheck{Name: check.name, OK: err == nil, Message: diagnosticMessage(err)})
 	}
+	if options.CheckRegistry != nil {
+		err := options.CheckRegistry()
+		result.Checks = append(result.Checks, DoctorCheck{Name: "registry", OK: err == nil, Message: diagnosticMessage(err)})
+	}
+	_, discoveryErr := os.Lstat(options.DiscoveryPath)
+	result.Checks = append(result.Checks, DoctorCheck{Name: "discovery", OK: discoveryErr == nil, Message: diagnosticMessage(discoveryErr)})
 	for _, check := range []struct {
 		name string
 		fn   func() error
@@ -105,18 +112,24 @@ type UninstallOptions struct {
 }
 
 type UninstallResult struct {
-	ManifestRemoved bool `json:"manifestRemoved"`
-	SettingsRemoved bool `json:"settingsRemoved"`
+	ManifestRemoved     bool `json:"manifestRemoved"`
+	RegistrationRemoved bool `json:"registrationRemoved,omitempty"`
+	SettingsRemoved     bool `json:"settingsRemoved"`
 }
 
 func Uninstall(options UninstallOptions) (UninstallResult, error) {
 	if filepath.Base(options.ManifestPath) != buildinfo.NativeHostName+".json" {
 		return UninstallResult{}, errors.New("refusing to remove an unmanaged Native Messaging manifest")
 	}
-	if filepath.Base(options.ProductDirectory) != "ChromeTabOrganizer" {
+	if filepath.Base(options.ProductDirectory) != buildinfo.ProductDirectoryName {
 		return UninstallResult{}, errors.New("refusing to remove an unmanaged settings directory")
 	}
 	result := UninstallResult{}
+	removed, err := unregisterPlatform(options.ManifestPath)
+	if err != nil {
+		return result, err
+	}
+	result.RegistrationRemoved = removed
 	if err := os.Remove(options.ManifestPath); err == nil {
 		result.ManifestRemoved = true
 	} else if !errors.Is(err, os.ErrNotExist) {
@@ -150,15 +163,34 @@ func CurrentExecutable() (string, error) {
 	return filepath.Abs(resolved)
 }
 
-func Install(executable string) (string, error) {
+type InstallResult struct {
+	ManifestPath string `json:"manifestPath"`
+	RegistryKey  string `json:"registryKey,omitempty"`
+}
+
+func Install(executable string) (InstallResult, error) {
 	manifestPath, err := NativeMessagingManifest()
 	if err != nil {
-		return "", err
+		return InstallResult{}, err
+	}
+	previousManifest, readErr := os.ReadFile(manifestPath)
+	hadPreviousManifest := readErr == nil
+	if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
+		return InstallResult{}, readErr
 	}
 	if err := WriteManifest(manifestPath, executable); err != nil {
-		return "", err
+		return InstallResult{}, err
 	}
-	return manifestPath, nil
+	registryKey, err := registerPlatform(manifestPath)
+	if err != nil {
+		if hadPreviousManifest {
+			_ = os.WriteFile(manifestPath, previousManifest, 0o600)
+		} else {
+			_ = os.Remove(manifestPath)
+		}
+		return InstallResult{}, err
+	}
+	return InstallResult{ManifestPath: manifestPath, RegistryKey: registryKey}, nil
 }
 
 func WriteManifest(manifestPath, executable string) error {
@@ -208,7 +240,7 @@ func WriteManifest(manifestPath, executable string) error {
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(temporaryPath, manifestPath); err != nil {
+	if err := replaceFile(temporaryPath, manifestPath); err != nil {
 		return err
 	}
 	committed = true

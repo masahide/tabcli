@@ -55,8 +55,8 @@ Chrome Stable 150.0.7871.129を、一時プロファイル・一時HOME・診断
 
 - extension 0.2.1とhost 0.2.1のprotocol 2 handshake: PASS
 - `tabcli --json doctor`: executable、native_manifest、discovery、chrome、mcpの全checkがtrue
-- `tabcli --json tabs list`: PASS
-- `tabcli --json groups list`: PASS
+- `tabcli --json list`: PASS（現行CLIでの対応コマンド）
+- `tabcli --json group list`: PASS（現行CLIでの対応コマンド）
 - 存在しないtab ID `2147483647`への確認済みclose: `TAB_NOT_FOUND`となり、タブ変更なし
 
 自動化した隔離Chromeの終了ではNative Hostが強制終了されstale discoveryが残ったが、`doctor`はPID不在として正しく拒否した。通常Chromeプロファイルと実タブはこの試験で操作していない。

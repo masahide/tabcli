@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/masahide/tabcli/internal/buildinfo"
@@ -78,16 +76,11 @@ func Write(path string, file File) error {
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(temporaryPath, path); err != nil {
+	if err := replaceFile(temporaryPath, path); err != nil {
 		return err
 	}
 	committed = true
-	directory, err := os.Open(dir)
-	if err != nil {
-		return err
-	}
-	defer directory.Close()
-	return directory.Sync()
+	return syncDirectory(dir)
 }
 
 func Read(path string, options ReadOptions) (File, error) {
@@ -101,11 +94,8 @@ func Read(path string, options ReadOptions) (File, error) {
 	if info.Mode().Perm() != 0o600 {
 		return File{}, fmt.Errorf("%w: %o", ErrUnsafePermissions, info.Mode().Perm())
 	}
-	if runtime.GOOS != "windows" {
-		stat, ok := info.Sys().(*syscall.Stat_t)
-		if !ok || int(stat.Uid) != os.Getuid() {
-			return File{}, ErrWrongOwner
-		}
+	if err := validateOwner(info); err != nil {
+		return File{}, err
 	}
 	handle, err := os.Open(path)
 	if err != nil {
@@ -164,12 +154,4 @@ func validateEndpoint(endpoint string) error {
 		return ErrInvalidEndpoint
 	}
 	return nil
-}
-
-func defaultProcessAlive(pid int) bool {
-	process, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	return process.Signal(syscall.Signal(0)) == nil
 }

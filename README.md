@@ -1,68 +1,74 @@
 # tabcli
 
-Chrome拡張機能、Native Messaging Host、MCP、CLIを組み合わせ、現在開いているChromeタブをAIエージェントから参照・分類・整理するためのプロジェクトです。
-
-プロダクト名、リポジトリ名、CLI実行ファイル名はすべて`tabcli`に統一しています。CLIのサブコマンド構造は互換性を保つため現行のネスト型を維持しており、フラット化は別の実装変更として扱います。
+Chrome拡張、Native Messaging Host、MCP、CLIを組み合わせ、現在開いているGoogle Chromeタブを参照・比較・整理するツールです。Windows 11 x64とChrome Stableを先行対象とし、現在ユーザーのHKCUとLOCALAPPDATAだけへインストールします。
 
 ## Documents
 
+- [Windowsインストール・利用ガイド](docs/getting-started-windows.md)
 - [要求仕様書](docs/requirements.md)
-- [要求適合監査](docs/260718_requirements_audit.md)
-- [macOS検証記録](docs/260718_macos_verification.md)
-- [macOSインストール・利用ガイド](docs/getting-started.md)
 - [開発者ガイド](docs/development.md)
+- [既存macOSガイド（後続再検証対象）](docs/getting-started.md)
+- [AIエージェント向けSkill](skills/tabcli/SKILL.md)
 
-## Build and release
+## Windows build and release
 
-Go 1.25とNode.js 24を用意し、リポジトリrootで次を実行します。
+Go 1.25とNode.js 24を用意し、cleanなリポジトリrootで実行します。
 
-```bash
-go run ./cmd/release --out dist --version 0.3.0
+```powershell
+.\scripts\publish-windows-release.ps1 -Version 0.3.0
 ```
 
-この単一entrypointがtest、拡張機能build、`darwin/arm64`・`darwin/amd64`の`CGO_ENABLED=0` build、identity不要のアドホック署名と厳格検証、再現可能ZIP、SHA-256 checksum、version metadata、成果物の秘密情報検査を実行します。ユーザー判断によりDeveloper ID署名・notarizationは行いません。
+`tabcli-VERSION-windows-amd64.zip`には`tabcli.exe`、extension ZIP、`install.ps1`、`INSTALL.txt`、version metadataが含まれます。Release assetとして`install-with-gh.ps1`と`SHA256SUMS`も生成します。バイナリは未署名のためSmartScreenが警告する場合があり、更新時はChromeを完全に終了する必要があります。
 
-Releaseは開発者が単一entrypointをローカル実行して検証済み成果物を生成し、対応commitへ`vVERSION`タグを付けて`gh release create`で公開します。
+成果物検証後にGitHub Releaseへ公開する場合は、cleanなHEADで`-Publish`を明示します。
 
-最新Releaseに添付されたインストーラーを`gh`で取得し、そのまま実行するワンライナーです。インストーラーがCPU選択、配布ZIPのchecksum・アドホック署名・version整合の検証、CLIとunpacked extensionの配置、Native Messaging登録を行います。Chromeへのunpacked extensionの読み込みだけは、最後に表示されるdirectoryを使って手動で行います。
-
-```bash
-set -o pipefail; gh release download -R masahide/tabcli -p install-with-gh.sh -O - | /bin/bash
+```powershell
+.\scripts\publish-windows-release.ps1 -Version 0.3.0 -Publish
 ```
 
-この形式では、GitHub Releaseから取得した`install-with-gh.sh`自体を事前検証せず実行する。スクリプトは配布ZIPを実行する前に`SHA256SUMS`を検証し、ZIP内インストーラーが署名とversionを再検証する。事前に内容を確認する場合は、パイプせず`--output install-with-gh.sh`で保存してから開く。
-
-Releaseからのインストールは[macOSインストール・利用ガイド](docs/getting-started.md)、ソースビルドとRelease作成は[開発者ガイド](docs/development.md)を参照してください。
+インストールとunpacked extensionの読み込みは[Windowsガイド](docs/getting-started-windows.md)を参照してください。インストーラーはChromeを強制終了せず、PATHも変更しません。
 
 ## CLI
 
-CLIは人間向け表示を既定とし、機械処理ではトップレベルの`--json`を指定します。成功時は結果オブジェクト、失敗時は`{"error":{"code":"...","message":"...","retryable":false}}`を標準出力へ返し、終了コードを非0にします。
+人間向け表示が既定です。機械処理ではトップレベルの`--json`を指定すると、成功結果または構造化エラーだけをstdoutへ返します。診断やuntrusted page contentの注意はstderrへ分離し、Token、Cookie、private headerは出力しません。
 
-`tabcli --help`は利用可能な名詞・動詞を一覧し、`tabcli tabs list --help`のように各コマンドのliteralなフラグを確認できます。JSONモードではJSONだけをstdoutへ出し、診断と本文取扱い通知はstderrへ分離します。Token、Cookie、private headerは出力しません。`doctor --json`はChrome未接続や設定不備もクラッシュせずchecksとして返します。
-
-```bash
-tabcli --json version
-tabcli --json doctor
-tabcli --json tabs list
-tabcli --json tabs content 123 --max-chars 10000
-tabcli --json tabs compare 123 456
-tabcli --json tabs diff 123 456 --max-chars 50000 --max-diff-chars 20000
-tabcli --json tabs close --confirm 123 456
-tabcli --json groups preview --plan plan.json
-tabcli --json groups apply --preview-id PREVIEW_ID
-tabcli mcp serve
+```text
+tabcli.exe list
+tabcli.exe content TAB_ID
+tabcli.exe compare TAB_ID_A TAB_ID_B
+tabcli.exe diff TAB_ID_A TAB_ID_B
+tabcli.exe close --confirm TAB_ID...
+tabcli.exe group list
+tabcli.exe group preview --plan FILE
+tabcli.exe group apply --preview-id ID
+tabcli.exe group undo
 ```
 
-`tabs compare`は2タブの可視テキスト全体を拡張機能内でSHA-256化し、本文を返さず一致だけを判定します。`tabs diff`は変更行だけを返し、未変更行と比較元全文はNative Messaging以降へ返しません。通常出力も変更行だけで、上限・切り詰め情報が必要な場合は`--json`を使います。どちらもタブを自動的に閉じません。
+管理コマンドの`install`、`uninstall`、`status`、`doctor`、`version`と、stdio MCP proxyの`mcp serve`も利用できます。旧`tabs list`と`groups list`に互換aliasはなく、未知のコマンドとして拒否します。
 
-グループ変更は必ず`groups preview`で差分を確認し、その結果の`previewId`を指定して`groups apply`します。タブのクローズは一覧で正確なtab IDを確認し、対象を明示承認した場合だけ`tabs close --confirm`で実行します。クローズはUndoできず、重複検出や対象の自動選択は行いません。コマンド、引数、出力契約は同梱の[AIエージェント向けSkill](skills/tabcli/SKILL.md)にも記載しています。
+```powershell
+$Tabcli = "$env:LOCALAPPDATA\Programs\tabcli\tabcli.exe"
+& $Tabcli --json version
+& $Tabcli --json doctor
+& $Tabcli --json list --inactive-for 7d --include-activity
+& $Tabcli --json content 123 --max-chars 10000
+& $Tabcli --json compare 123 456
+& $Tabcli --json diff 123 456 --max-chars 50000 --max-diff-chars 20000
+& $Tabcli --json close --confirm 123 456
+& $Tabcli --json group preview --plan .\plan.json
+& $Tabcli --json group apply --preview-id PREVIEW_ID
+& $Tabcli mcp serve
+```
 
-終了コードは成功が`0`、usageが`2`で、接続失敗、入力不正、stale plan、本文権限、apply/rollback、Undo、protocol不整合をそれぞれ別コードで返します。空の一覧は正常終了です。
+`compare`は可視テキストを拡張内でSHA-256化して一致を判定し、本文を返しません。`diff`は上限付きの変更行だけを返します。どちらもタブを自動的に閉じません。
 
-## Install the unpacked extension
+グループ変更は必ず`group preview`の差分を明示承認した後、その`previewId`で`group apply`します。クローズは一覧で正確なIDを確認し、承認した同じIDだけを`close --confirm`へ渡します。クローズはUndoできません。
 
-Releaseからのインストール、Chromeへの読み込み、動作確認、アンインストールは[macOSインストール・利用ガイド](docs/getting-started.md)にまとめています。
+## Fixed identities
 
-manifestの公開鍵から得られる固定extension IDは`ddgfmgclndpdobieomcjaklboinbaoel`です。
+- Go module: `github.com/masahide/tabcli`
+- Native Messaging Host: `io.github.masahide.tabcli`
+- Chrome extension ID: `ddgfmgclndpdobieomcjaklboinbaoel`
+- Windows product data: `%LOCALAPPDATA%\tabcli`
 
-拡張機能は通常のHTTP/HTTPSページに対するhost permissionを持ちますが、常駐content scriptは注入しません。ページ本文の取得・SHA-256比較・変更行差分は、ユーザーが明示した1タブまたは2タブに対して該当コマンドを実行したときだけ、同梱の固定関数を`chrome.scripting.executeScript()`で動的に実行します。
+extension IDを維持するため、[extension/manifest.json](extension/manifest.json)の公開鍵は変更しません。MCP tool名とschemaは既存の`chrome_*`契約を維持します。

@@ -14,7 +14,7 @@ func TestDiagnoseIsReadOnly(t *testing.T) {
 	discovery := filepath.Join(dir, "discovery.json")
 	for path, contents := range map[string]string{
 		executable: "binary",
-		manifest:   `{"name":"io.github.yamasaki_masahide_cyg.tabcli","description":"test","path":"` + executable + `","type":"stdio","allowed_origins":["chrome-extension://ddgfmgclndpdobieomcjaklboinbaoel/"]}`,
+		manifest:   `{"name":"io.github.masahide.tabcli","description":"test","path":"` + executable + `","type":"stdio","allowed_origins":["chrome-extension://ddgfmgclndpdobieomcjaklboinbaoel/"]}`,
 		discovery:  `{"endpoint":"http://127.0.0.1:1234/mcp"}`,
 	} {
 		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
@@ -65,8 +65,8 @@ func TestDiagnoseRejectsMismatchedManifest(t *testing.T) {
 
 func TestUninstallRemovesOnlyManagedRegistrationAndSettings(t *testing.T) {
 	dir := t.TempDir()
-	manifest := filepath.Join(dir, "Google", "Chrome", "NativeMessagingHosts", "io.github.yamasaki_masahide_cyg.tabcli.json")
-	settings := filepath.Join(dir, "ChromeTabOrganizer")
+	manifest := filepath.Join(dir, "Google", "Chrome", "NativeMessagingHosts", "io.github.masahide.tabcli.json")
+	settings := filepath.Join(dir, "tabcli")
 	unrelatedManifest := filepath.Join(filepath.Dir(manifest), "com.example.unrelated.json")
 	unrelatedSettings := filepath.Join(dir, "another-product")
 	developerKey := filepath.Join(settings, "extension-key.pem")

@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	var out, version, commit, architectures string
+	var out, version, commit, architectures, target string
 	var sourceDateEpoch int64
 	flag.StringVar(&out, "out", "dist", "release output directory")
 	flag.StringVar(&version, "version", "0.3.0-dev", "release version")
 	flag.StringVar(&commit, "commit", "", "source commit (default: git HEAD)")
 	flag.StringVar(&architectures, "architectures", "arm64,amd64", "comma-separated darwin architectures")
+	flag.StringVar(&target, "target", "windows-amd64", "release target: windows-amd64 or darwin")
 	flag.Int64Var(&sourceDateEpoch, "source-date-epoch", 0, "reproducible Unix build timestamp (default: commit timestamp)")
 	flag.Parse()
 	if commit == "" {
@@ -31,7 +32,7 @@ func main() {
 	if sourceDateEpoch <= 0 {
 		sourceDateEpoch = 315532800
 	}
-	err := release.Build(release.BuildConfig{Root: ".", Out: out, Version: version, Commit: commit, Timestamp: time.Unix(sourceDateEpoch, 0), Architectures: strings.Split(architectures, ","), Stdout: os.Stdout, Stderr: os.Stderr})
+	err := release.Build(release.BuildConfig{Root: ".", Out: out, Version: version, Commit: commit, Timestamp: time.Unix(sourceDateEpoch, 0), Architectures: strings.Split(architectures, ","), Target: target, Stdout: os.Stdout, Stderr: os.Stderr})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

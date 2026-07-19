@@ -1,6 +1,6 @@
 # Classification plan形式
 
-`tabcli groups preview --plan FILE`へ渡すJSONは次の形にする。
+`tabcli group preview --plan FILE`へ渡すJSONは次の形にする。
 
 ```json
 {
@@ -34,4 +34,4 @@
 
 新規groupのcolorは`grey`、`blue`、`red`、`yellow`、`green`、`pink`、`purple`、`cyan`、`orange`から選ぶ。`existing_groups_only`では新規groupを指定しない。
 
-直前の`tabs content`結果に依存するplanでは、その`contentRevision`を`contentRevisions`の`revision`へ含める。compareとdiffはrevisionを返さないため指定しない。通常のタイトル・URL分類でも省略する。
+直前の`content`結果に依存するplanでは、その`contentRevision`を`contentRevisions`の`revision`へ含める。compareとdiffはrevisionを返さないため指定しない。通常のタイトル・URL分類でも省略する。

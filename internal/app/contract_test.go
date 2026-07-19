@@ -50,7 +50,7 @@ func TestDirectProxyAndCLIContractsMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	var cliOut, cliErr bytes.Buffer
-	if code := cli.Run(context.Background(), []string{"tabs", "list", "--json"}, direct, &cliOut, &cliErr); code != cli.ExitOK {
+	if code := cli.Run(context.Background(), []string{"list", "--json"}, direct, &cliOut, &cliErr); code != cli.ExitOK {
 		t.Fatalf("CLI exit = %d, stderr = %q", code, cliErr.String())
 	}
 	var cliResult tools.TabsListResult
@@ -78,7 +78,7 @@ func TestDirectProxyAndCLIContractsMatch(t *testing.T) {
 	}
 	cliOut.Reset()
 	cliErr.Reset()
-	if code := cli.Run(context.Background(), []string{"tabs", "list", "--json"}, disconnected, &cliOut, &cliErr); code != cli.ExitBrowserDisconnected || !strings.Contains(cliOut.String(), string(tools.CodeBrowserDisconnected)) || cliErr.Len() != 0 {
+	if code := cli.Run(context.Background(), []string{"list", "--json"}, disconnected, &cliOut, &cliErr); code != cli.ExitBrowserDisconnected || !strings.Contains(cliOut.String(), string(tools.CodeBrowserDisconnected)) || cliErr.Len() != 0 {
 		t.Fatalf("CLI disconnected exit = %d, stdout = %q, stderr = %q", code, cliOut.String(), cliErr.String())
 	}
 }

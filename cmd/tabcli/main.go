@@ -70,10 +70,10 @@ func runCLI(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 			"maximumProtocolVersion": buildinfo.MaximumProtocolVersion,
 			"extensionId":            buildinfo.ExtensionID,
 		},
-		Install: func() (string, error) {
+		Install: func() (any, error) {
 			executable, err := install.CurrentExecutable()
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			return install.Install(executable)
 		},
@@ -111,6 +111,7 @@ func runCLI(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 				ExecutablePath: executable,
 				ManifestPath:   manifestPath,
 				DiscoveryPath:  discoveryPath,
+				CheckRegistry:  install.RegistrationCheck(manifestPath),
 				CheckChrome: func() error {
 					_, err := discovery.Read(discoveryPath, discovery.ReadOptions{ProtocolVersion: tools.ProtocolVersion})
 					return err
