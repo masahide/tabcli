@@ -561,7 +561,7 @@ sequenceDiagram
 - [x] DOC-005 要求仕様のOS、CLI、DIST、SKILL要件をWindows-firstへ更新する
 - [x] DOC-006 macOS再検証を後続計画として記録する
 - [ ] VERIFY-001 Windows上で `gofmt` と既存formatterを実行する
-- [ ] VERIFY-002 Windows上で `go test ./...` を実行する
+- [x] VERIFY-002 Windows上で `go test ./...` を実行する
 - [x] VERIFY-003 `npm ci`、`npm test`、`npm run typecheck`、`npm run build` を実行する
 - [ ] VERIFY-004 WindowsリアルChrome統合テストを実行する
 - [ ] VERIFY-005 windows amd64 Releaseを2回生成し、再現性、checksum、version整合を確認する

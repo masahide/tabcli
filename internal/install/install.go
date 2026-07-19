@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/masahide/tabcli/internal/buildinfo"
 )
@@ -145,7 +144,7 @@ func Uninstall(options UninstallOptions) (UninstallResult, error) {
 	}
 	result.SettingsRemoved = true
 	// Remove the product directory only when no developer or future-version files remain.
-	if err := os.Remove(options.ProductDirectory); err != nil && !errors.Is(err, os.ErrNotExist) && !errors.Is(err, syscall.ENOTEMPTY) {
+	if err := os.Remove(options.ProductDirectory); err != nil && !errors.Is(err, os.ErrNotExist) && !isDirectoryNotEmpty(err) {
 		return result, err
 	}
 	return result, nil

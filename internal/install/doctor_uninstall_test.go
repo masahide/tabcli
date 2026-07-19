@@ -12,14 +12,13 @@ func TestDiagnoseIsReadOnly(t *testing.T) {
 	executable := filepath.Join(dir, "tabcli")
 	manifest := filepath.Join(dir, "native-host.json")
 	discovery := filepath.Join(dir, "discovery.json")
-	for path, contents := range map[string]string{
-		executable: "binary",
-		manifest:   `{"name":"io.github.masahide.tabcli","description":"test","path":"` + executable + `","type":"stdio","allowed_origins":["chrome-extension://ddgfmgclndpdobieomcjaklboinbaoel/"]}`,
-		discovery:  `{"endpoint":"http://127.0.0.1:1234/mcp"}`,
-	} {
+	for path, contents := range map[string]string{executable: "binary", discovery: `{"endpoint":"http://127.0.0.1:1234/mcp"}`} {
 		if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if err := WriteManifest(manifest, executable); err != nil {
+		t.Fatal(err)
 	}
 	before := fileDigests(t, executable, manifest, discovery)
 	chromeChecks, mcpChecks := 0, 0

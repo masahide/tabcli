@@ -9,8 +9,12 @@ import (
 )
 
 func TestReleaseInstallScriptSyntax(t *testing.T) {
+	bash, err := exec.LookPath("bash")
+	if err != nil {
+		t.Skip("bash is unavailable on this platform")
+	}
 	for _, path := range []string{"../../scripts/install-release.sh", "../../scripts/install-with-gh.sh"} {
-		command := exec.Command("/bin/bash", "-n", path)
+		command := exec.Command(bash, "-n", path)
 		if output, err := command.CombinedOutput(); err != nil {
 			t.Fatalf("bash -n %s: %v\n%s", path, err, output)
 		}

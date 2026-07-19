@@ -91,8 +91,8 @@ func Read(path string, options ReadOptions) (File, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return File{}, ErrSymlink
 	}
-	if info.Mode().Perm() != 0o600 {
-		return File{}, fmt.Errorf("%w: %o", ErrUnsafePermissions, info.Mode().Perm())
+	if err := validatePermissions(info); err != nil {
+		return File{}, err
 	}
 	if err := validateOwner(info); err != nil {
 		return File{}, err

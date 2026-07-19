@@ -33,8 +33,8 @@ func TestWriteCreatesAtomicOwnerOnlyFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := info.Mode().Perm(); got != 0o600 {
-		t.Fatalf("mode = %o, want 600", got)
+	if err := validatePermissions(info); err != nil {
+		t.Fatalf("discovery permissions = %v", err)
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
