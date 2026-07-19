@@ -1,0 +1,4 @@
+interface:
+  display_name: "tabcli CLI"
+  short_description: "tabcliでChromeタブを安全に確認・整理・比較する"
+  default_prompt: "Use $tabcli to inspect and safely organize my current Chrome tabs with tabcli."

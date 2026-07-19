@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "tabcli",
+  "version": "0.3.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArpY4FwWEAfNRcWmgMovRrNacvch70tNCX7ZMBs+ZvxAi4Y86nsmLk9GLhXRM0yiZ1aFydv1r17Bwkl3oCdIuDO9uaK5CbiRHqELw2H2M7pjtMtYmp/IJ4yHkkTJTK2rEEgk+71tU91JGLcCJvQdBhzN4z8coXKPTg3aSTgg1r16sAZ1o2mPf0KmCAdFwPRmpXdUoI9wJacAeRlCRaRA9WMksIH5ZbdtXnHyw02YHkMFCNqieLvoFrbr0Ef079T6Mvi2soxrz4cZdRuM8I5PBRQFdf7WTa/uRQByht7qeot8CWeulbiZ/BwQvs8SQmS0Yu945mO57c/sfkmxfk8hIPwIDAQAB",
+  "minimum_chrome_version": "121",
+  "description": "Organize current Chrome tabs through a local, approval-gated MCP server.",
+  "options_page": "options.html",
+  "permissions": ["tabs", "tabGroups", "storage", "scripting", "nativeMessaging"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "dist/service-worker.js",
+    "type": "module"
+  }
+}

@@ -1,0 +1,6 @@
+/extension/node_modules/
+/extension/dist/
+/dist/
+/tabctl
+/.secrets/
+.DS_Store

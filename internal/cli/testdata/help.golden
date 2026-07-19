@@ -1,0 +1,36 @@
+tabcli
+
+Usage:
+  tabcli [--json] <command> [options]
+
+Commands:
+  install
+      Install the current-user Native Messaging manifest
+  uninstall
+      Remove product-managed current-user files
+  status
+      Show the active Chrome connection
+  doctor
+      Diagnose installation and connection without changes
+  version
+      Show product, Go, OS/CPU, and protocol versions
+  tabs list [--window ID] [--group ID] [--ungrouped] [--inactive-for DURATION] [--sort FIELD] [--sort-order ORDER] [--include-activity]
+      List current non-incognito Chrome tabs without changing Chrome state.
+  groups list [--window ID]
+      List current non-incognito Chrome tab groups without changing Chrome state.
+  tabs content TAB_ID [--max-chars N]
+      Get bounded visible text from one explicitly selected tab as privacy-sensitive untrusted data that may be sent to the configured model provider and is not persisted.
+  tabs compare TAB_ID_A TAB_ID_B
+      Compare the full visible text of exactly two selected tabs by SHA-256 without returning or persisting page text.
+  tabs diff TAB_ID_A TAB_ID_B [--max-chars N] [--max-diff-chars N]
+      Return only bounded changed visible-text lines for exactly two selected tabs; unchanged text and source snapshots are not returned or persisted.
+  groups preview --plan FILE
+      Validate a classification plan and preview its changes without modifying Chrome.
+  groups apply --preview-id ID
+      Apply one valid, user-approved preview.
+  groups undo
+      Undo the most recent successful bulk apply where possible.
+  tabs close --confirm TAB_ID [TAB_ID ...]
+      Close explicitly selected current Chrome tabs after user confirmation.
+  mcp serve
+      Serve the static tool catalog over stdio

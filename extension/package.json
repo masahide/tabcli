@@ -1,0 +1,19 @@
+{
+  "name": "tabcli-extension",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run clean && node scripts/build.mjs",
+    "clean": "node scripts/clean.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.1.33",
+    "esbuild": "0.28.1",
+    "puppeteer-core": "25.1.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

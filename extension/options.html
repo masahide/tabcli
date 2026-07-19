@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tabcli Settings</title>
+  </head>
+  <body>
+    <main>
+      <h1>tabcli</h1>
+      <p>Page text is processed only for explicitly selected tabs. Full text or changed lines may be passed to the MCP client and your model provider; SHA-256 comparison does not return page text.</p>
+      <section>
+        <h2>Ignored tabs</h2>
+        <p>One Chrome match pattern or hostname per line.</p>
+        <textarea id="tabignore" rows="8" cols="60"></textarea>
+        <button id="save-tabignore" type="button">Save</button>
+      </section>
+      <output id="status" aria-live="polite"></output>
+    </main>
+    <script type="module" src="dist/options.js"></script>
+  </body>
+</html>

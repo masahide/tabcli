@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chrome Tab Organizer CLI"
+  short_description: "tabctlでChromeタブを安全に確認・整理・比較する"
+  default_prompt: "Use $chrome-tab-organizer to inspect and safely organize my current Chrome tabs with tabctl."
