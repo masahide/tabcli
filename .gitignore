@@ -3,4 +3,5 @@
 /dist/
 /tabctl
 /.secrets/
+/arc.tar.gz
 .DS_Store
