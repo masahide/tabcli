@@ -42,6 +42,28 @@ func TestWindowsInstallScriptsContainSafetyAndVerificationContracts(t *testing.T
 	}
 }
 
+func TestIRMBootstrapDownloadsLatestVerifiedWindowsRelease(t *testing.T) {
+	bootstrap, err := os.ReadFile("../../install.ps1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, marker := range []string{
+		"https://api.github.com/repos/$repository",
+		"releases/latest",
+		"windows-amd64.zip",
+		"SHA256SUMS",
+		"Get-FileHash",
+		"Checksum mismatch",
+		"PROCESSOR_ARCHITECTURE",
+		"[ScriptBlock]::Create",
+		"-BundleRoot $bundleRoot",
+	} {
+		if !strings.Contains(string(bootstrap), marker) {
+			t.Errorf("root install.ps1 lacks %q", marker)
+		}
+	}
+}
+
 func TestWindowsReleasePublisherContainsBuildVerificationAndExplicitPublishGate(t *testing.T) {
 	script, err := os.ReadFile("../../scripts/publish-windows-release.ps1")
 	if err != nil {

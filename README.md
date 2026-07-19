@@ -26,6 +26,22 @@ Go 1.25とNode.js 24を用意し、cleanなリポジトリrootで実行します
 .\scripts\publish-windows-release.ps1 -Version 0.3.0 -Publish
 ```
 
+## Install on Windows
+
+Windows PowerShellから最新のstable Releaseをワンライナーでインストールできます。
+
+```powershell
+irm https://raw.githubusercontent.com/masahide/tabcli/main/install.ps1 | iex
+```
+
+bootstrapはGitHub APIから最新ReleaseのWindows amd64 bundleと`SHA256SUMS`を取得し、SHA-256検証に成功したbundleだけを展開します。GitHub CLIや管理者権限は不要です。このワンライナーは`main`上のスクリプトを事前確認せず実行するため、確認してから実行する場合は次を使用します。
+
+```powershell
+irm https://raw.githubusercontent.com/masahide/tabcli/main/install.ps1 -OutFile install-tabcli.ps1
+Get-Content .\install-tabcli.ps1
+.\install-tabcli.ps1
+```
+
 インストールとunpacked extensionの読み込みは[Windowsガイド](docs/getting-started-windows.md)を参照してください。インストーラーはChromeを強制終了せず、PATHも変更しません。
 
 ## CLI
