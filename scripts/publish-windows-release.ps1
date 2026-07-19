@@ -36,6 +36,23 @@ function Get-NativeOutput {
     return ($output | Out-String).Trim()
 }
 
+function Test-NativeSuccess {
+    param(
+        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter(Mandatory = $true)][string[]]$Arguments
+    )
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        # Windows PowerShell 5.1 converts expected native stderr (for example,
+        # "release not found") into NativeCommandError when Stop is active.
+        $ErrorActionPreference = "Continue"
+        & $Command @Arguments *> $null
+        return $LASTEXITCODE -eq 0
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
 function Assert-Checksums {
     param([Parameter(Mandatory = $true)][string]$Root)
 
@@ -129,13 +146,12 @@ try {
     }
 
     Invoke-Native "gh" @("auth", "status")
-    & gh release view $tag --repo $Repository *> $null
-    if ($LASTEXITCODE -eq 0) {
+    if (Test-NativeSuccess "gh" @("release", "view", $tag, "--repo", $Repository)) {
         throw "GitHub Release $tag already exists in $Repository"
     }
 
-    $localTagCommit = (& git rev-list -n 1 $tag 2>$null | Out-String).Trim()
-    if ($LASTEXITCODE -eq 0 -and $localTagCommit) {
+    if (Test-NativeSuccess "git" @("show-ref", "--verify", "--quiet", "refs/tags/$tag")) {
+        $localTagCommit = Get-NativeOutput "git" @("rev-list", "-n", "1", $tag)
         if ($localTagCommit -ne $commit) {
             throw "Local tag $tag points to $localTagCommit instead of $commit"
         }
@@ -147,9 +163,9 @@ try {
         Invoke-Native "git" @("tag", "-a", $tag, $commit, "-m", "tabcli $Version")
     }
 
-    $remoteTagLine = (& git ls-remote --tags $Remote "refs/tags/$tag^{}" 2>$null | Out-String).Trim()
+    $remoteTagLine = Get-NativeOutput "git" @("ls-remote", "--tags", $Remote, "refs/tags/$tag^{}")
     if (-not $remoteTagLine) {
-        $remoteUndereferencedTag = (& git ls-remote --tags $Remote "refs/tags/$tag" 2>$null | Out-String).Trim()
+        $remoteUndereferencedTag = Get-NativeOutput "git" @("ls-remote", "--tags", $Remote, "refs/tags/$tag")
         if ($remoteUndereferencedTag) {
             throw "Remote tag $tag exists but is not an annotated tag"
         }
