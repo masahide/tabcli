@@ -2,6 +2,22 @@
 
 Windows 11 x64を先行開発・配布対象とする。Go 1.25、Node.js 24、npm、PowerShell 5.1以降、Google Chrome Stable 121以降を用意する。
 
+## 固定IDと互換性
+
+実装と配布物では次のIDと配置を維持する。
+
+- Go module: `github.com/masahide/tabcli`
+- Native Messaging Host: `io.github.masahide.tabcli`
+- Chrome extension ID: `ddgfmgclndpdobieomcjaklboinbaoel`
+- Windows product data: `%LOCALAPPDATA%\tabcli`
+- Windows executable: `%LOCALAPPDATA%\Programs\tabcli\tabcli.exe`
+
+extension IDを維持するため、[extension/manifest.json](../extension/manifest.json)の公開鍵は変更しない。MCP tool名とschemaは既存APIとして`chrome_*`契約を維持する。
+
+CLIは`list`、`content`、`compare`、`diff`、`close`、`group`をトップレベルの利用者向けコマンドとする。旧`tabs list`と`groups list`に互換aliasはなく、未知のコマンドとして拒否する。管理コマンドは`install`、`uninstall`、`status`、`doctor`、`version`、stdio MCP proxyは`mcp serve`で提供する。
+
+機械処理ではトップレベルの`--json`を指定する。成功結果または構造化エラーだけをstdoutへ返し、診断とuntrusted page contentの注意はstderrへ分離する。Token、Cookie、private headerは出力しない。
+
 ## 検証
 
 ```powershell
@@ -40,6 +56,10 @@ cleanなHEADとextensionのversionを指定versionへ揃え、次を実行する
 ```
 
 公開には`gh auth status`が成功する認証が必要となる。すでに同じHEADを指すtagが存在する場合は再利用するため、tag push後にRelease作成だけが失敗した場合も再実行できる。別commitを指す同名tagや既存Releaseがある場合は安全のため失敗する。
+
+Windows bundleには`tabcli.exe`、extension ZIP、PowerShell installer、`INSTALL.txt`、version metadataを含める。Release assetとして`install-with-gh.ps1`と`SHA256SUMS`も生成する。バイナリはAuthenticode未署名のためSmartScreenが警告する場合がある。
+
+インストーラーはChromeや`tabcli.exe`を強制終了しない。更新時にバイナリを置換できない場合は、Chromeを完全に終了して再実行する。インストール成功時は実行ファイルの配置先を現在ユーザーのPATHへ重複なく追加する。
 
 ## Windows実機統合
 
